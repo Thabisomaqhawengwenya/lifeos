@@ -16,11 +16,15 @@ import { M3FAB } from '@/src/components/ui/M3FAB';
 import { haptic } from '@/src/design-system/haptics';
 import { TaskRepository, TaskItem } from '@/src/repositories/TaskRepository';
 import { HabitRepository, HabitItem } from '@/src/repositories/HabitRepository';
+import { TaskDetailModal } from '@/src/components/tasks/TaskDetailModal';
+import { GlobalSearchModal } from '@/src/components/search/GlobalSearchModal';
 
 export default function HomeScreen() {
   const { colors, spacing, radii, typography, isDark, mode, setThemeMode } = useAppTheme();
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [habits, setHabits] = useState<HabitItem[]>([]);
+  const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
+  const [searchVisible, setSearchVisible] = useState(false);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -91,24 +95,37 @@ export default function HomeScreen() {
         title={`${greeting}, Mr Q`}
         subtitle={todayFormatted}
         rightAction={
-          <Pressable
-            onPress={toggleTheme}
-            style={[
-              styles.themeToggle,
-              {
-                backgroundColor: colors.surfaceVariant,
-                borderRadius: radii.full,
-              },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Toggle light or dark theme"
-          >
-            <Ionicons
-              name={isDark ? 'moon' : 'sunny'}
-              size={18}
-              color={colors.primary}
-            />
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              onPress={() => setSearchVisible(true)}
+              style={[
+                styles.iconButton,
+                { backgroundColor: colors.surfaceVariant, borderRadius: radii.full, marginRight: 8 },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Global search"
+            >
+              <Ionicons name="search" size={18} color={colors.onSurface} />
+            </Pressable>
+            <Pressable
+              onPress={toggleTheme}
+              style={[
+                styles.iconButton,
+                {
+                  backgroundColor: colors.surfaceVariant,
+                  borderRadius: radii.full,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Toggle light or dark theme"
+            >
+              <Ionicons
+                name={isDark ? 'moon' : 'sunny'}
+                size={18}
+                color={colors.primary}
+              />
+            </Pressable>
+          </View>
         }
       />
 
@@ -149,7 +166,7 @@ export default function HomeScreen() {
           </View>
 
           {/* Quick Metrics Bar */}
-          <View style={[styles.metricsRow, { borderColor: colors.divider }]}>
+          <View style={[styles.metricsRow, { borderColor: colors.outlineVariant }]}>
             <View style={styles.metricItem}>
               <Text style={[typography.headlineLarge, { color: colors.primary }]}>
                 {completedCount} / {tasks.length}
@@ -158,7 +175,7 @@ export default function HomeScreen() {
                 Tasks Done
               </Text>
             </View>
-            <View style={[styles.metricDivider, { backgroundColor: colors.divider }]} />
+            <View style={[styles.metricDivider, { backgroundColor: colors.outlineVariant }]} />
             <View style={styles.metricItem}>
               <Text style={[typography.headlineLarge, { color: colors.accentGold }]}>
                 {bestStreak}d
@@ -167,7 +184,7 @@ export default function HomeScreen() {
                 Active Streak
               </Text>
             </View>
-            <View style={[styles.metricDivider, { backgroundColor: colors.divider }]} />
+            <View style={[styles.metricDivider, { backgroundColor: colors.outlineVariant }]} />
             <View style={styles.metricItem}>
               <Text style={[typography.headlineLarge, { color: colors.tertiary }]}>
                 {habits.filter((h) => h.is_logged_today).length} / {habits.length}
@@ -216,8 +233,9 @@ export default function HomeScreen() {
         {tasks.slice(0, 3).map((task) => (
           <M3Card
             key={task.id}
-            variant="outlined"
+            variant="elevated"
             style={[styles.taskCard, task.is_completed && { opacity: 0.6 }]}
+            onPress={() => setSelectedTask(task)}
           >
             <View style={styles.taskCardContent}>
               <Pressable
@@ -313,6 +331,20 @@ export default function HomeScreen() {
         icon="add"
         style={styles.fab}
       />
+
+      {/* Task Detail Modal */}
+      <TaskDetailModal
+        visible={Boolean(selectedTask)}
+        task={selectedTask}
+        onClose={() => setSelectedTask(null)}
+        onUpdated={loadData}
+      />
+
+      {/* Global Search Modal */}
+      <GlobalSearchModal
+        visible={searchVisible}
+        onClose={() => setSearchVisible(false)}
+      />
     </View>
   );
 }
@@ -321,7 +353,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  themeToggle: {
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconButton: {
     padding: 8,
     alignItems: 'center',
     justifyContent: 'center',

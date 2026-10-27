@@ -24,6 +24,8 @@ import { FinanceRepository, TransactionItem, FinanceSummary } from '@/src/reposi
 import { NoteRepository, GoalRepository, NoteItem, GoalItem } from '@/src/repositories/NoteAndGoalRepository';
 import { SecurityService } from '@/src/services/SecurityService';
 import { LicenseService, LicenseInfo } from '@/src/services/LicenseService';
+import { CurrencyService, CurrencyConfig, SupportedCurrency, CURRENCIES } from '@/src/services/CurrencyService';
+import { NoteEditorModal } from '@/src/components/notes/NoteEditorModal';
 
 type LifeSection = 'habits' | 'goals' | 'finance' | 'notes' | 'backup';
 
@@ -39,6 +41,7 @@ export default function LifeScreen() {
     net_balance_cents: 0,
   });
   const [recentTransactions, setRecentTransactions] = useState<TransactionItem[]>([]);
+  const [currency, setCurrency] = useState<CurrencyConfig>(CURRENCIES.USD);
   const [licenseInfo, setLicenseInfo] = useState<LicenseInfo>({
     isActivated: false,
     tier: 'community',
@@ -47,28 +50,30 @@ export default function LifeScreen() {
     expiresYear: null,
   });
   const [keyInput, setKeyInput] = useState('');
+  const [selectedNote, setSelectedNote] = useState<NoteItem | null>(null);
+  const [noteModalVisible, setNoteModalVisible] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
-      const [hList, gList, nList, txList] = await Promise.all([
+      const [hList, gList, nList, txList, cur, lic] = await Promise.all([
         HabitRepository.getAllHabits(),
         GoalRepository.getAllGoals(),
         NoteRepository.getAllNotes(),
         FinanceRepository.getAllTransactions(10),
+        CurrencyService.getPreferredCurrency(),
+        LicenseService.getLicenseInfo(),
       ]);
 
       setHabits(hList);
       setGoals(gList);
       setNotes(nList);
       setRecentTransactions(txList);
+      setCurrency(cur);
+      setLicenseInfo(lic);
 
       const currentMonth = new Date().toISOString().slice(0, 7);
-      const [summary, lic] = await Promise.all([
-        FinanceRepository.getMonthlySummary(currentMonth),
-        LicenseService.getLicenseInfo(),
-      ]);
+      const summary = await FinanceRepository.getMonthlySummary(currentMonth);
       setFinanceSummary(summary);
-      setLicenseInfo(lic);
     } catch (err) {
       console.warn('Error loading Life data:', err);
     }
@@ -85,6 +90,19 @@ export default function LifeScreen() {
     const today = new Date().toISOString().split('T')[0];
     await HabitRepository.toggleHabitCheckIn(habitId, today);
     await loadData();
+  };
+
+  const handleUpdateGoalProgress = async (goalId: string, currentPercent: number, delta: number) => {
+    haptic.selection();
+    const newProgress = Math.max(0, Math.min(100, currentPercent + delta));
+    await GoalRepository.updateProgress(goalId, newProgress);
+    await loadData();
+  };
+
+  const handleSwitchCurrency = async (code: SupportedCurrency) => {
+    haptic.selection();
+    await CurrencyService.setPreferredCurrency(code);
+    setCurrency(CURRENCIES[code]);
   };
 
   const handleExportBackup = async () => {
@@ -222,28 +240,61 @@ export default function LifeScreen() {
 
         {activeSection === 'goals' && (
           <>
-            <Text style={[typography.titleLarge, { color: colors.onBackground, marginBottom: 12 }]}>
-              Key Milestones & Goals ({goals.length})
-            </Text>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={[typography.titleLarge, { color: colors.onBackground }]}>
+                Key Milestones & Goals ({goals.length})
+              </Text>
+            </View>
+
             {goals.length === 0 ? (
               <M3EmptyState
                 icon="trophy-outline"
                 title="No Goals Configured"
-                description="Define long-term horizons and link them to actionable steps."
+                description="Define long-term horizons and track incremental progress."
                 actionTitle="Create Goal"
                 onAction={() => router.push('/modal')}
               />
             ) : (
               goals.map((g) => (
                 <M3Card key={g.id} variant="elevated" style={styles.cardItem}>
-                  <Text style={[typography.titleMedium, { color: colors.onSurface }]}>
-                    {g.title}
-                  </Text>
-                  <Text style={[typography.bodySmall, { color: colors.onSurfaceVariant, marginTop: 4 }]}>
-                    {g.description || 'Milestone target'} • {g.progress_percent}% completed
-                  </Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <View style={{ flex: 1, paddingRight: 8 }}>
+                      <Text style={[typography.titleMedium, { color: colors.onSurface }]}>
+                        {g.title}
+                      </Text>
+                      <Text style={[typography.bodySmall, { color: colors.onSurfaceVariant, marginTop: 4 }]}>
+                        {g.description || 'Deliverable'} • {g.progress_percent}% completed
+                      </Text>
+                    </View>
+
+                    {/* Steppers */}
+                    <View style={styles.steppersRow}>
+                      <Pressable
+                        onPress={() => handleUpdateGoalProgress(g.id, g.progress_percent, -10)}
+                        style={[styles.stepBtn, { backgroundColor: colors.surfaceVariant, borderRadius: radii.full }]}
+                      >
+                        <Ionicons name="remove" size={16} color={colors.onSurface} />
+                      </Pressable>
+                      <Pressable
+                        onPress={() => handleUpdateGoalProgress(g.id, g.progress_percent, 10)}
+                        style={[styles.stepBtn, { backgroundColor: colors.primaryContainer, borderRadius: radii.full, marginLeft: 6 }]}
+                      >
+                        <Ionicons name="add" size={16} color={colors.onPrimaryContainer} />
+                      </Pressable>
+                    </View>
+                  </View>
+
                   <View style={[styles.progressBarBg, { backgroundColor: colors.surfaceVariant, borderRadius: radii.full }]}>
-                    <View style={[styles.progressBarFill, { width: `${g.progress_percent}%`, backgroundColor: colors.primary, borderRadius: radii.full }]} />
+                    <View
+                      style={[
+                        styles.progressBarFill,
+                        {
+                          width: `${g.progress_percent}%`,
+                          backgroundColor: g.progress_percent === 100 ? colors.success : colors.primary,
+                          borderRadius: radii.full,
+                        },
+                      ]}
+                    />
                   </View>
                 </M3Card>
               ))
@@ -253,9 +304,20 @@ export default function LifeScreen() {
 
         {activeSection === 'finance' && (
           <>
-            <Text style={[typography.titleLarge, { color: colors.onBackground, marginBottom: 12 }]}>
-              Financial Ledger & Balance
-            </Text>
+            {/* Currency Selector Bar */}
+            <View style={styles.currencySelectorRow}>
+              <Text style={[typography.labelMedium, { color: colors.onSurfaceVariant, marginRight: 8 }]}>
+                CURRENCY:
+              </Text>
+              {(['USD', 'ZiG', 'ZAR'] as SupportedCurrency[]).map((code) => (
+                <M3Chip
+                  key={code}
+                  label={code}
+                  selected={currency.code === code}
+                  onPress={() => handleSwitchCurrency(code)}
+                />
+              ))}
+            </View>
 
             <M3Card variant="elevated" style={styles.cardItem}>
               <View style={styles.financeMetricsRow}>
@@ -264,7 +326,7 @@ export default function LifeScreen() {
                     TOTAL EXPENSES
                   </Text>
                   <Text style={[typography.headlineMedium, { color: colors.error, marginTop: 2 }]}>
-                    ${(financeSummary.total_expense_cents / 100).toFixed(2)}
+                    {CurrencyService.formatCents(financeSummary.total_expense_cents, currency)}
                   </Text>
                 </View>
                 <View>
@@ -272,7 +334,7 @@ export default function LifeScreen() {
                     TOTAL INCOME
                   </Text>
                   <Text style={[typography.headlineMedium, { color: colors.success, marginTop: 2 }]}>
-                    ${(financeSummary.total_income_cents / 100).toFixed(2)}
+                    {CurrencyService.formatCents(financeSummary.total_income_cents, currency)}
                   </Text>
                 </View>
                 <View>
@@ -280,7 +342,7 @@ export default function LifeScreen() {
                     NET BALANCE
                   </Text>
                   <Text style={[typography.headlineMedium, { color: colors.primary, marginTop: 2 }]}>
-                    ${(financeSummary.net_balance_cents / 100).toFixed(2)}
+                    {CurrencyService.formatCents(financeSummary.net_balance_cents, currency)}
                   </Text>
                 </View>
               </View>
@@ -312,7 +374,7 @@ export default function LifeScreen() {
                       { color: tx.type === 'expense' ? colors.error : colors.success, fontWeight: '700' },
                     ]}
                   >
-                    {tx.type === 'expense' ? '-' : '+'}${(tx.amount_cents / 100).toFixed(2)}
+                    {tx.type === 'expense' ? '-' : '+'}{CurrencyService.formatCents(tx.amount_cents, currency)}
                   </Text>
                 </M3Card>
               ))
@@ -322,26 +384,57 @@ export default function LifeScreen() {
 
         {activeSection === 'notes' && (
           <>
-            <Text style={[typography.titleLarge, { color: colors.onBackground, marginBottom: 12 }]}>
-              Personal Notes & Knowledge ({notes.length})
-            </Text>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={[typography.titleLarge, { color: colors.onBackground }]}>
+                Personal Notes & Knowledge ({notes.length})
+              </Text>
+              <Pressable
+                onPress={() => {
+                  setSelectedNote(null);
+                  setNoteModalVisible(true);
+                }}
+                style={[styles.addNoteHeaderBtn, { backgroundColor: colors.primaryContainer, borderRadius: radii.full }]}
+              >
+                <Ionicons name="add" size={16} color={colors.onPrimaryContainer} />
+                <Text style={[typography.labelSmall, { color: colors.onPrimaryContainer, fontWeight: '700', marginLeft: 4 }]}>
+                  NEW NOTE
+                </Text>
+              </Pressable>
+            </View>
+
             {notes.length === 0 ? (
               <M3EmptyState
                 icon="document-text-outline"
                 title="Your Knowledge Base is Empty"
                 description="Capture quick ideas, project specs, or meeting memos."
                 actionTitle="Create Note"
-                onAction={() => router.push('/modal')}
+                onAction={() => {
+                  setSelectedNote(null);
+                  setNoteModalVisible(true);
+                }}
               />
             ) : (
               notes.map((n) => (
-                <M3Card key={n.id} variant="elevated" style={styles.cardItem}>
+                <M3Card
+                  key={n.id}
+                  variant="elevated"
+                  style={styles.cardItem}
+                  onPress={() => {
+                    setSelectedNote(n);
+                    setNoteModalVisible(true);
+                  }}
+                >
                   <Text style={[typography.titleMedium, { color: colors.onSurface }]}>
                     {n.title}
                   </Text>
                   <Text style={[typography.bodyMedium, { color: colors.onSurfaceVariant, marginTop: 4 }]}>
                     {n.content}
                   </Text>
+                  {n.tags ? (
+                    <Text style={[typography.labelSmall, { color: colors.primary, marginTop: 8 }]}>
+                      {n.tags}
+                    </Text>
+                  ) : null}
                 </M3Card>
               ))
             )}
@@ -351,9 +444,10 @@ export default function LifeScreen() {
         {activeSection === 'backup' && (
           <>
             <Text style={[typography.titleLarge, { color: colors.onBackground, marginBottom: 12 }]}>
-              Security Vault & Backups
+              Security Vault & Licensing
             </Text>
 
+            {/* License Activation Card */}
             <M3Card variant="elevated" style={styles.cardItem}>
               <View style={styles.vaultHeader}>
                 <Ionicons name="key-outline" size={24} color={colors.primary} />
@@ -424,6 +518,7 @@ export default function LifeScreen() {
               )}
             </M3Card>
 
+            {/* Vault Backup Card */}
             <M3Card variant="elevated" style={styles.cardItem}>
               <View style={styles.vaultHeader}>
                 <Ionicons name="shield-checkmark" size={24} color={colors.primary} />
@@ -457,6 +552,14 @@ export default function LifeScreen() {
         icon="add"
         style={styles.fab}
       />
+
+      {/* Note Editor Modal */}
+      <NoteEditorModal
+        visible={noteModalVisible}
+        note={selectedNote}
+        onClose={() => setNoteModalVisible(false)}
+        onSaved={loadData}
+      />
     </View>
   );
 }
@@ -478,6 +581,18 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     padding: 16,
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  addNoteHeaderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
   cardHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -493,6 +608,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
+  steppersRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  stepBtn: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   progressBarBg: {
     height: 8,
     width: '100%',
@@ -501,6 +626,12 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
+  },
+  currencySelectorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 6,
   },
   financeMetricsRow: {
     flexDirection: 'row',

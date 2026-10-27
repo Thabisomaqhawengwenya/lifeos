@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   ScrollView,
   View,
@@ -17,6 +17,8 @@ import { M3FAB } from '@/src/components/ui/M3FAB';
 import { M3EmptyState } from '@/src/components/ui/M3EmptyState';
 import { haptic } from '@/src/design-system/haptics';
 import { TaskRepository, TaskItem } from '@/src/repositories/TaskRepository';
+import { TaskDetailModal } from '@/src/components/tasks/TaskDetailModal';
+import { GlobalSearchModal } from '@/src/components/search/GlobalSearchModal';
 
 type FilterType = 'all' | 'today' | 'upcoming' | 'completed';
 
@@ -25,29 +27,13 @@ export default function TasksScreen() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
+  const [searchVisible, setSearchVisible] = useState(false);
 
   const loadTasks = useCallback(async () => {
     try {
       const data = await TaskRepository.getAllTasks();
-      // If database is completely empty on first launch, seed 2 starter tasks
-      if (data.length === 0) {
-        await TaskRepository.createTask({
-          title: 'Welcome to LifeOS — Tap checkbox to complete',
-          category: 'Personal',
-          priority: 'medium',
-          due_date: 'Today',
-        });
-        await TaskRepository.createTask({
-          title: 'Verify SQLite persistence & notifications',
-          category: 'Architecture',
-          priority: 'high',
-          due_date: 'Today',
-        });
-        const seeded = await TaskRepository.getAllTasks();
-        setTasks(seeded);
-      } else {
-        setTasks(data);
-      }
+      setTasks(data);
     } catch (err) {
       console.warn('Error loading tasks:', err);
     }
@@ -91,6 +77,16 @@ export default function TasksScreen() {
       <M3Header
         title="Tasks & Deliverables"
         subtitle={`${pendingCount} active items in local SQLite`}
+        rightAction={
+          <Pressable
+            onPress={() => setSearchVisible(true)}
+            style={[styles.searchHeaderBtn, { backgroundColor: colors.surfaceVariant, borderRadius: radii.full }]}
+            accessibilityRole="button"
+            accessibilityLabel="Search all items"
+          >
+            <Ionicons name="search" size={20} color={colors.onSurface} />
+          </Pressable>
+        }
       />
 
       {/* Filter Chips Bar */}
@@ -154,6 +150,7 @@ export default function TasksScreen() {
                   styles.taskCard,
                   task.is_completed && { opacity: 0.65, backgroundColor: colors.surfaceVariant },
                 ]}
+                onPress={() => setSelectedTask(task)}
               >
                 <View style={styles.taskCardRow}>
                   <Pressable
@@ -227,6 +224,24 @@ export default function TasksScreen() {
                           • {task.due_date}
                         </Text>
                       )}
+
+                      {task.subtask_count ? (
+                        <View style={styles.subtaskBadge}>
+                          <Ionicons
+                            name="git-branch-outline"
+                            size={12}
+                            color={colors.onSurfaceVariant}
+                          />
+                          <Text
+                            style={[
+                              typography.labelSmall,
+                              { color: colors.onSurfaceVariant, marginLeft: 4 },
+                            ]}
+                          >
+                            {task.completed_subtasks}/{task.subtask_count}
+                          </Text>
+                        </View>
+                      ) : null}
                     </View>
                   </View>
 
@@ -255,6 +270,20 @@ export default function TasksScreen() {
         icon="add"
         style={styles.fab}
       />
+
+      {/* Task Detail Modal */}
+      <TaskDetailModal
+        visible={Boolean(selectedTask)}
+        task={selectedTask}
+        onClose={() => setSelectedTask(null)}
+        onUpdated={loadTasks}
+      />
+
+      {/* Global Search Modal */}
+      <GlobalSearchModal
+        visible={searchVisible}
+        onClose={() => setSearchVisible(false)}
+      />
     </View>
   );
 }
@@ -262,6 +291,11 @@ export default function TasksScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  searchHeaderBtn: {
+    padding: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterStrip: {
     paddingVertical: 10,
@@ -302,6 +336,11 @@ const styles = StyleSheet.create({
   categoryBadge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
+  },
+  subtaskBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 10,
   },
   deleteButton: {
     padding: 4,

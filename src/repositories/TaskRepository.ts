@@ -122,6 +122,68 @@ export class TaskRepository {
     await db.runAsync(`UPDATE tasks SET deleted_at = ?, updated_at = ? WHERE id = ?`, [now, now, id]);
   }
 
+  static async updateTask(
+    id: string,
+    updates: {
+      title?: string;
+      description?: string;
+      priority?: 'low' | 'medium' | 'high';
+      due_date?: string;
+      category?: string;
+    }
+  ): Promise<void> {
+    const db = await getDatabase();
+    const now = new Date().toISOString();
+    const sets: string[] = ['updated_at = ?'];
+    const params: any[] = [now];
+
+    if (updates.title !== undefined) {
+      sets.push('title = ?');
+      params.push(updates.title);
+    }
+    if (updates.description !== undefined) {
+      sets.push('description = ?');
+      params.push(updates.description);
+    }
+    if (updates.priority !== undefined) {
+      sets.push('priority = ?');
+      params.push(updates.priority);
+    }
+    if (updates.due_date !== undefined) {
+      sets.push('due_date = ?');
+      params.push(updates.due_date);
+    }
+    if (updates.category !== undefined) {
+      sets.push('category = ?');
+      params.push(updates.category);
+    }
+
+    params.push(id);
+    await db.runAsync(`UPDATE tasks SET ${sets.join(', ')} WHERE id = ?`, params);
+  }
+
+  static async getSubtasksForTask(taskId: string): Promise<SubtaskItem[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<any>(
+      `SELECT * FROM subtasks WHERE task_id = ? ORDER BY position ASC, created_at ASC`,
+      [taskId]
+    );
+
+    return rows.map((r) => ({
+      id: r.id,
+      task_id: r.task_id,
+      title: r.title,
+      is_completed: Boolean(r.is_completed),
+      position: Number(r.position || 0),
+      created_at: r.created_at,
+    }));
+  }
+
+  static async deleteSubtask(subtaskId: string): Promise<void> {
+    const db = await getDatabase();
+    await db.runAsync(`DELETE FROM subtasks WHERE id = ?`, [subtaskId]);
+  }
+
   static async addSubtask(taskId: string, title: string): Promise<SubtaskItem> {
     const db = await getDatabase();
     const id = Crypto.randomUUID();
