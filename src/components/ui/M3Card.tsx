@@ -55,17 +55,20 @@ export function M3Card({
   };
 
   let backgroundColor = colors.surface;
-  let borderWidth = 0;
-  let borderColor = 'transparent';
+  let borderWidth = 1;
+  let borderColor = colors.outlineVariant;
   let elevation = 0;
   let shadowOpacity = 0;
 
   if (variant === 'filled') {
     backgroundColor = colors.surfaceVariant;
+    borderWidth = 0;
   } else if (variant === 'elevated') {
     backgroundColor = colors.surfaceElevated;
     elevation = 2;
-    shadowOpacity = isDark ? 0.3 : 0.08;
+    shadowOpacity = isDark ? 0.3 : 0.05;
+    borderWidth = 1;
+    borderColor = colors.outlineVariant;
   } else if (variant === 'outlined') {
     backgroundColor = colors.surface;
     borderWidth = 1;
@@ -79,9 +82,9 @@ export function M3Card({
     borderWidth,
     borderColor,
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity,
-    shadowRadius: 6,
+    shadowRadius: 10,
     elevation,
   };
 

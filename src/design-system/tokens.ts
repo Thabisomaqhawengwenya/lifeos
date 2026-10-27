@@ -1,30 +1,30 @@
 export const LightColors = {
-  primary: '#0F4C3A', // Deep Forest Emerald
+  primary: '#0C3E35', // Deep Forest Pine / Emerald (Pinterest App Board Benchmark)
   onPrimary: '#FFFFFF',
-  primaryContainer: '#D0E8DC',
-  onPrimaryContainer: '#052017',
+  primaryContainer: '#D0E9E0',
+  onPrimaryContainer: '#04211A',
 
-  secondary: '#335345',
+  secondary: '#365548',
   onSecondary: '#FFFFFF',
-  secondaryContainer: '#D6E6DC',
-  onSecondaryContainer: '#0F2018',
+  secondaryContainer: '#D7E8E0',
+  onSecondaryContainer: '#0E211A',
 
-  tertiary: '#21566B', // Deep Slate Indigo
+  tertiary: '#24596F', // Deep Slate Indigo
   onTertiary: '#FFFFFF',
-  tertiaryContainer: '#CBE6F5',
-  onTertiaryContainer: '#041E28',
+  tertiaryContainer: '#CCE7F6',
+  onTertiaryContainer: '#051E28',
 
-  background: '#F6F9F7',
-  onBackground: '#171D1A',
+  background: '#F8F7F4', // Warm Organic Alabaster / Chalk Cream (PawHome & Taxi Rider Pins)
+  onBackground: '#161C19',
 
   surface: '#FFFFFF',
-  onSurface: '#171D1A',
-  surfaceVariant: '#E9EFEA',
+  onSurface: '#161C19',
+  surfaceVariant: '#EFF2EE',
   onSurfaceVariant: '#404944',
   surfaceElevated: '#FFFFFF',
 
   outline: '#707974',
-  outlineVariant: '#C0C9C3',
+  outlineVariant: 'rgba(0, 0, 0, 0.08)',
 
   success: '#147D4C',
   successContainer: '#D0F4DF',
@@ -38,21 +38,21 @@ export const LightColors = {
   errorContainer: '#FFDAD6',
   onErrorContainer: '#410002',
 
-  accentGold: '#C58B12',
+  accentGold: '#C99742', // Champagne Gold Accent
   accentGoldContainer: '#FCEAC2',
 
-  divider: 'rgba(0, 0, 0, 0.08)',
+  divider: 'rgba(0, 0, 0, 0.06)',
   shadow: '#000000',
 };
 
 export const DarkColors = {
-  primary: '#80D7B4', // Luminous Mint Pine
+  primary: '#7FE0B8', // Luminous Mint Pine
   onPrimary: '#003828',
-  primaryContainer: '#0E4E3B',
-  onPrimaryContainer: '#9DF4CE',
+  primaryContainer: '#0A4A38',
+  onPrimaryContainer: '#9BF7CE',
 
   secondary: '#B4CCBF',
-  onSecondary: '#1F3529',
+  onSecondary: '#1E3529',
   secondaryContainer: '#354B3F',
   onSecondaryContainer: '#D0E8DB',
 
@@ -61,17 +61,17 @@ export const DarkColors = {
   tertiaryContainer: '#134B5E',
   onTertiaryContainer: '#BDE8FD',
 
-  background: '#0D1210',
+  background: '#0B100E', // Deep Obsidian Green
   onBackground: '#DFE4DF',
 
-  surface: '#131A16',
+  surface: '#121916',
   onSurface: '#DFE4DF',
-  surfaceVariant: '#1E2622',
+  surfaceVariant: '#1A2420',
   onSurfaceVariant: '#C0C9C3',
-  surfaceElevated: '#212B26',
+  surfaceElevated: '#202C27',
 
   outline: '#8A938E',
-  outlineVariant: '#3F4944',
+  outlineVariant: 'rgba(255, 255, 255, 0.08)',
 
   success: '#46DB8B',
   successContainer: '#00522B',
