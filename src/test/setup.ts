@@ -1,8 +1,11 @@
 import { vi } from 'vitest';
+import crypto from 'node:crypto';
 
 vi.mock('expo-crypto', () => ({
   randomUUID: () => 'mock-uuid-1234',
-  digestStringAsync: async () => 'mock-sha256-hash',
+  digestStringAsync: async (_algo: any, str: string) => {
+    return crypto.createHash('sha256').update(str).digest('hex');
+  },
   CryptoDigestAlgorithm: { SHA256: 'SHA-256' },
 }));
 
@@ -27,8 +30,15 @@ vi.mock('expo-notifications', () => ({
   SchedulableTriggerInputTypes: { DATE: 'date' },
 }));
 
-vi.mock('expo-secure-store', () => ({
-  setItemAsync: async () => {},
-  getItemAsync: async () => null,
-  deleteItemAsync: async () => {},
-}));
+vi.mock('expo-secure-store', () => {
+  const store = new Map<string, string>();
+  return {
+    setItemAsync: async (k: string, v: string) => {
+      store.set(k, v);
+    },
+    getItemAsync: async (k: string) => store.get(k) || null,
+    deleteItemAsync: async (k: string) => {
+      store.delete(k);
+    },
+  };
+});

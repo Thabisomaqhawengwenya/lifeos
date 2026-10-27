@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { AIAssistantService } from '../services/AIAssistantService';
 import { SecurityService } from '../services/SecurityService';
+import { LicenseService } from '../services/LicenseService';
 
 describe('LifeOS Core AI Engine & Heuristics', () => {
   it('correctly parses natural language expense requests into minor units (cents)', () => {
@@ -100,5 +101,33 @@ describe('LifeOS Security & Vault Integrity', () => {
     expect(parsed.tables).toHaveProperty('tasks');
     expect(parsed.tables).toHaveProperty('habits');
     expect(parsed.tables).toHaveProperty('financial_transactions');
+  });
+});
+
+describe('LifeOS Cryptographic Offline Licensing', () => {
+  it('validates authentic offline HMAC-SHA256 license keys', async () => {
+    const validKey = 'LIFEOS-PRO-MRQ-BE3BCDBB';
+    const res = await LicenseService.verifyLicenseKey(validKey);
+
+    expect(res.isValid).toBe(true);
+    expect(res.tier).toBe('pro');
+    expect(res.holderName).toBe('MRQ');
+    expect(res.expiresYear).toBe(2030);
+  });
+
+  it('rejects tampered or malformed license keys', async () => {
+    const tampered = 'LIFEOS-PRO-MRQ-DEADBEEF';
+    const res = await LicenseService.verifyLicenseKey(tampered);
+
+    expect(res.isValid).toBe(false);
+    expect(res.error).toBeDefined();
+  });
+
+  it('activates valid license and retrieves license info', async () => {
+    const key = 'LIFEOS-PRO-MRQ-BE3BCDBB';
+    const activation = await LicenseService.activateLicense(key);
+
+    expect(activation.success).toBe(true);
+    expect(activation.tier).toBe('pro');
   });
 });

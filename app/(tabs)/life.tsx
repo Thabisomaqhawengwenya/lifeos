@@ -6,6 +6,8 @@ import {
   StyleSheet,
   Pressable,
   Alert,
+  TextInput,
+  Platform,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +23,7 @@ import { HabitRepository, HabitItem } from '@/src/repositories/HabitRepository';
 import { FinanceRepository, TransactionItem, FinanceSummary } from '@/src/repositories/FinanceRepository';
 import { NoteRepository, GoalRepository, NoteItem, GoalItem } from '@/src/repositories/NoteAndGoalRepository';
 import { SecurityService } from '@/src/services/SecurityService';
+import { LicenseService, LicenseInfo } from '@/src/services/LicenseService';
 
 type LifeSection = 'habits' | 'goals' | 'finance' | 'notes' | 'backup';
 
@@ -36,6 +39,14 @@ export default function LifeScreen() {
     net_balance_cents: 0,
   });
   const [recentTransactions, setRecentTransactions] = useState<TransactionItem[]>([]);
+  const [licenseInfo, setLicenseInfo] = useState<LicenseInfo>({
+    isActivated: false,
+    tier: 'community',
+    licenseKey: null,
+    holderName: null,
+    expiresYear: null,
+  });
+  const [keyInput, setKeyInput] = useState('');
 
   const loadData = useCallback(async () => {
     try {
@@ -52,8 +63,12 @@ export default function LifeScreen() {
       setRecentTransactions(txList);
 
       const currentMonth = new Date().toISOString().slice(0, 7);
-      const summary = await FinanceRepository.getMonthlySummary(currentMonth);
+      const [summary, lic] = await Promise.all([
+        FinanceRepository.getMonthlySummary(currentMonth),
+        LicenseService.getLicenseInfo(),
+      ]);
       setFinanceSummary(summary);
+      setLicenseInfo(lic);
     } catch (err) {
       console.warn('Error loading Life data:', err);
     }
@@ -82,6 +97,21 @@ export default function LifeScreen() {
       );
     } catch (err: any) {
       Alert.alert('Backup Error', err.message);
+    }
+  };
+
+  const handleActivateKey = async () => {
+    if (!keyInput.trim()) return;
+    haptic.medium();
+    const res = await LicenseService.activateLicense(keyInput.trim());
+    if (res.success) {
+      haptic.success();
+      Alert.alert('Activation Successful', `LifeOS ${res.tier?.toUpperCase()} license activated successfully.`);
+      setKeyInput('');
+      await loadData();
+    } else {
+      haptic.warning();
+      Alert.alert('Activation Failed', res.error || 'Invalid license key.');
     }
   };
 
@@ -326,6 +356,76 @@ export default function LifeScreen() {
 
             <M3Card variant="elevated" style={styles.cardItem}>
               <View style={styles.vaultHeader}>
+                <Ionicons name="key-outline" size={24} color={colors.primary} />
+                <Text style={[typography.titleMedium, { color: colors.onSurface, marginLeft: 10 }]}>
+                  Software License & Tier
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
+                <Text style={[typography.bodyMedium, { color: colors.onSurfaceVariant }]}>
+                  Current Status:{' '}
+                </Text>
+                <View
+                  style={[
+                    styles.streakBadge,
+                    {
+                      backgroundColor: licenseInfo.isActivated ? colors.primaryContainer : colors.surfaceVariant,
+                      borderRadius: radii.full,
+                      paddingVertical: 2,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      typography.labelSmall,
+                      {
+                        color: licenseInfo.isActivated ? colors.onPrimaryContainer : colors.onSurfaceVariant,
+                        fontWeight: '700',
+                      },
+                    ]}
+                  >
+                    {licenseInfo.isActivated ? `LIFETIME ${licenseInfo.tier.toUpperCase()}` : 'COMMUNITY EDITION'}
+                  </Text>
+                </View>
+              </View>
+
+              {!licenseInfo.isActivated ? (
+                <View style={{ marginTop: 14 }}>
+                  <TextInput
+                    value={keyInput}
+                    onChangeText={setKeyInput}
+                    placeholder="LIFEOS-PRO-XXXX-XXXXXXXX"
+                    placeholderTextColor={colors.outline}
+                    autoCapitalize="characters"
+                    style={[
+                      styles.licenseInput,
+                      {
+                        backgroundColor: colors.surface,
+                        borderColor: colors.outlineVariant,
+                        color: colors.onSurface,
+                        borderRadius: radii.md,
+                      },
+                    ]}
+                  />
+                  <View style={{ marginTop: 10 }}>
+                    <M3Button
+                      title="Activate Offline License"
+                      variant="tonal"
+                      size="small"
+                      onPress={handleActivateKey}
+                      disabled={!keyInput.trim()}
+                    />
+                  </View>
+                </View>
+              ) : (
+                <Text style={[typography.bodySmall, { color: colors.success, marginTop: 8 }]}>
+                  ✓ Licensed to {licenseInfo.holderName} (Active through {licenseInfo.expiresYear})
+                </Text>
+              )}
+            </M3Card>
+
+            <M3Card variant="elevated" style={styles.cardItem}>
+              <View style={styles.vaultHeader}>
                 <Ionicons name="shield-checkmark" size={24} color={colors.primary} />
                 <Text style={[typography.titleMedium, { color: colors.onSurface, marginLeft: 10 }]}>
                   Cryptographic Offline Vault
@@ -416,6 +516,13 @@ const styles = StyleSheet.create({
   vaultHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  licenseInput: {
+    height: 44,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   fab: {
     position: 'absolute',
