@@ -6,6 +6,16 @@
 
 ---
 
+## 📲 Download & Install Android APK
+
+| Platform | Download Link | Build Type | Status |
+| :--- | :--- | :--- | :--- |
+| **Android (APK)** | [⬇️ Download LifeOS v1.0.0 APK](https://github.com/Thabisomaqhawengwenya/lifeos/releases/download/v1.0.0/LifeOS-v1.0.0.apk) | Standalone Preview APK (`com.maqhawe.lifeos`) | ✅ Ready |
+| **GitHub Release** | [📦 GitHub Release v1.0.0](https://github.com/Thabisomaqhawengwenya/lifeos/releases/tag/v1.0.0) | Official Release Asset | ✅ Live |
+| **Expo EAS Cloud** | [🌐 Expo Build Details](https://expo.dev/accounts/maqhawengwenya/projects/LifeOS/builds/c07108e4-c2d4-4646-be56-04b805b15cc7) | EAS Cloud Artifact | ✅ Complete |
+
+---
+
 ## 🏛️ Architecture & System Design
 
 LifeOS operates on a strict **local-first architecture**. All reads and writes hit an embedded SQLite database running in Write-Ahead Logging (WAL) mode, guaranteeing instant responsiveness, offline resilience, and zero data loss on phone reboots.
