@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   ScrollView,
   View,
@@ -6,20 +6,22 @@ import {
   StyleSheet,
   Pressable,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { M3Header } from '@/src/components/ui/M3Header';
 import { M3Card } from '@/src/components/ui/M3Card';
-import { M3Button } from '@/src/components/ui/M3Button';
 import { M3Chip } from '@/src/components/ui/M3Chip';
 import { M3FAB } from '@/src/components/ui/M3FAB';
 import { haptic } from '@/src/design-system/haptics';
+import { TaskRepository, TaskItem } from '@/src/repositories/TaskRepository';
+import { HabitRepository, HabitItem } from '@/src/repositories/HabitRepository';
 
 export default function HomeScreen() {
   const { colors, spacing, radii, typography, isDark, mode, setThemeMode } = useAppTheme();
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [habits, setHabits] = useState<HabitItem[]>([]);
 
-  // Dynamic greeting based on time of day
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const todayFormatted = new Date().toLocaleDateString('en-US', {
@@ -28,6 +30,50 @@ export default function HomeScreen() {
     day: 'numeric',
   });
 
+  const loadData = useCallback(async () => {
+    try {
+      const taskList = await TaskRepository.getAllTasks();
+      setTasks(taskList);
+
+      let habitList = await HabitRepository.getAllHabits();
+      if (habitList.length === 0) {
+        await HabitRepository.createHabit({
+          name: 'Morning Deep Work',
+          description: 'Focus block without notifications',
+          targetDays: 5,
+        });
+        await HabitRepository.createHabit({
+          name: 'Hydration 2.5L',
+          description: 'Daily water intake',
+          targetDays: 7,
+        });
+        habitList = await HabitRepository.getAllHabits();
+      }
+      setHabits(habitList);
+    } catch (err) {
+      console.warn('Failed loading home data:', err);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
+
+  const toggleTask = async (id: string) => {
+    haptic.success();
+    await TaskRepository.toggleTask(id);
+    await loadData();
+  };
+
+  const toggleHabit = async (habitId: string) => {
+    haptic.selection();
+    const today = new Date().toISOString().split('T')[0];
+    await HabitRepository.toggleHabitCheckIn(habitId, today);
+    await loadData();
+  };
+
   const toggleTheme = () => {
     haptic.selection();
     if (mode === 'light') setThemeMode('dark');
@@ -35,10 +81,13 @@ export default function HomeScreen() {
     else setThemeMode('light');
   };
 
+  const completedCount = tasks.filter((t) => t.is_completed).length;
+  const bestStreak = habits.reduce((max, h) => Math.max(max, h.streak_current), 0);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <M3Header
-        badge="LifeOS v1.0"
+        badge="LifeOS • Local SQLite"
         title={`${greeting}, Mr Q`}
         subtitle={todayFormatted}
         rightAction={
@@ -94,7 +143,7 @@ export default function HomeScreen() {
                   { color: colors.onPrimaryContainer, marginLeft: 4, fontWeight: '700' },
                 ]}
               >
-                OPTIMIZED
+                LIVE
               </Text>
             </View>
           </View>
@@ -102,23 +151,29 @@ export default function HomeScreen() {
           {/* Quick Metrics Bar */}
           <View style={[styles.metricsRow, { borderColor: colors.divider }]}>
             <View style={styles.metricItem}>
-              <Text style={[typography.headlineLarge, { color: colors.primary }]}>3 / 5</Text>
+              <Text style={[typography.headlineLarge, { color: colors.primary }]}>
+                {completedCount} / {tasks.length}
+              </Text>
               <Text style={[typography.labelSmall, { color: colors.onSurfaceVariant }]}>
-                Tasks Due
+                Tasks Done
               </Text>
             </View>
             <View style={[styles.metricDivider, { backgroundColor: colors.divider }]} />
             <View style={styles.metricItem}>
-              <Text style={[typography.headlineLarge, { color: colors.accentGold }]}>4</Text>
+              <Text style={[typography.headlineLarge, { color: colors.accentGold }]}>
+                {bestStreak}d
+              </Text>
               <Text style={[typography.labelSmall, { color: colors.onSurfaceVariant }]}>
-                Habit Streak
+                Active Streak
               </Text>
             </View>
             <View style={[styles.metricDivider, { backgroundColor: colors.divider }]} />
             <View style={styles.metricItem}>
-              <Text style={[typography.headlineLarge, { color: colors.tertiary }]}>2</Text>
+              <Text style={[typography.headlineLarge, { color: colors.tertiary }]}>
+                {habits.filter((h) => h.is_logged_today).length} / {habits.length}
+              </Text>
               <Text style={[typography.labelSmall, { color: colors.onSurfaceVariant }]}>
-                Events
+                Habits Checked
               </Text>
             </View>
           </View>
@@ -138,7 +193,9 @@ export default function HomeScreen() {
               ]}
             >
               <Text style={{ fontWeight: '700' }}>AI Assistant: </Text>
-              Your schedule is open between 2:00 PM and 4:30 PM. Ideal window to finish high-priority deliverables.
+              {tasks.filter((t) => !t.is_completed).length > 0
+                ? `You have ${tasks.filter((t) => !t.is_completed).length} open deliverables. Stay locked in on high-priority items.`
+                : 'All deliverables are completed! Great work maintaining zero backlog.'}
             </Text>
           </View>
         </M3Card>
@@ -156,88 +213,66 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
-        {/* Priority Task Cards */}
-        <M3Card variant="outlined" style={styles.taskCard}>
-          <View style={styles.taskCardContent}>
-            <Pressable
-              onPress={() => haptic.success()}
-              style={[
-                styles.checkbox,
-                { borderColor: colors.outline, borderRadius: radii.xs },
-              ]}
-              accessibilityRole="checkbox"
-              accessibilityLabel="Mark complete"
-            >
-              <Ionicons name="checkmark" size={16} color="transparent" />
-            </Pressable>
-            <View style={styles.taskTextContainer}>
-              <Text style={[typography.titleMedium, { color: colors.onSurface }]}>
-                Review LifeOS Architecture Blueprint
-              </Text>
-              <View style={styles.taskMetaRow}>
-                <View
-                  style={[
-                    styles.tagBadge,
-                    { backgroundColor: colors.primaryContainer, borderRadius: radii.full },
-                  ]}
-                >
-                  <Text style={[typography.labelSmall, { color: colors.onPrimaryContainer }]}>
-                    Architecture
-                  </Text>
-                </View>
-                <Text style={[typography.labelSmall, { color: colors.error, marginLeft: 8 }]}>
-                  High Priority
-                </Text>
-              </View>
-            </View>
-          </View>
-        </M3Card>
-
-        <M3Card variant="outlined" style={styles.taskCard}>
-          <View style={styles.taskCardContent}>
-            <Pressable
-              onPress={() => haptic.success()}
-              style={[
-                styles.checkbox,
-                { borderColor: colors.outline, borderRadius: radii.xs },
-              ]}
-              accessibilityRole="checkbox"
-              accessibilityLabel="Mark complete"
-            >
-              <Ionicons name="checkmark" size={16} color="transparent" />
-            </Pressable>
-            <View style={styles.taskTextContainer}>
-              <Text style={[typography.titleMedium, { color: colors.onSurface }]}>
-                Execute SQLite Phase 2 Migrations
-              </Text>
-              <View style={styles.taskMetaRow}>
-                <View
-                  style={[
-                    styles.tagBadge,
-                    { backgroundColor: colors.secondaryContainer, borderRadius: radii.full },
-                  ]}
-                >
-                  <Text style={[typography.labelSmall, { color: colors.onSecondaryContainer }]}>
-                    Database
-                  </Text>
-                </View>
+        {tasks.slice(0, 3).map((task) => (
+          <M3Card
+            key={task.id}
+            variant="outlined"
+            style={[styles.taskCard, task.is_completed && { opacity: 0.6 }]}
+          >
+            <View style={styles.taskCardContent}>
+              <Pressable
+                onPress={() => toggleTask(task.id)}
+                style={[
+                  styles.checkbox,
+                  {
+                    borderColor: task.is_completed ? colors.primary : colors.outline,
+                    backgroundColor: task.is_completed ? colors.primary : 'transparent',
+                    borderRadius: radii.xs,
+                  },
+                ]}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: task.is_completed }}
+              >
+                {task.is_completed && (
+                  <Ionicons name="checkmark" size={16} color={colors.onPrimary} />
+                )}
+              </Pressable>
+              <View style={styles.taskTextContainer}>
                 <Text
                   style={[
-                    typography.labelSmall,
-                    { color: colors.onSurfaceVariant, marginLeft: 8 },
+                    typography.titleMedium,
+                    {
+                      color: colors.onSurface,
+                      textDecorationLine: task.is_completed ? 'line-through' : 'none',
+                    },
                   ]}
                 >
-                  Today 3:00 PM
+                  {task.title}
                 </Text>
+                <View style={styles.taskMetaRow}>
+                  <View
+                    style={[
+                      styles.tagBadge,
+                      { backgroundColor: colors.primaryContainer, borderRadius: radii.full },
+                    ]}
+                  >
+                    <Text style={[typography.labelSmall, { color: colors.onPrimaryContainer }]}>
+                      {task.category}
+                    </Text>
+                  </View>
+                  <Text style={[typography.labelSmall, { color: colors.error, marginLeft: 8 }]}>
+                    {task.priority.toUpperCase()}
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
-        </M3Card>
+          </M3Card>
+        ))}
 
         {/* Habits Snapshot Section */}
         <View style={styles.sectionHeader}>
           <Text style={[typography.titleLarge, { color: colors.onBackground }]}>
-            Habit Consistency
+            Daily Habit Check-in
           </Text>
           <Pressable
             onPress={() => router.push('/(tabs)/life')}
@@ -248,30 +283,24 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.chipsRow}>
-          <M3Chip
-            label="Morning Deep Work"
-            selected={true}
-            onPress={() => {}}
-            badge="5d"
-            icon={<Ionicons name="flame" size={14} color={colors.onPrimary} />}
-          />
-          <M3Chip
-            label="Hydration 2.5L"
-            selected={false}
-            onPress={() => {}}
-            badge="12d"
-            icon={<Ionicons name="water-outline" size={14} color={colors.primary} />}
-          />
-          <M3Chip
-            label="Evening Review"
-            selected={false}
-            onPress={() => {}}
-            badge="3d"
-            icon={<Ionicons name="book-outline" size={14} color={colors.primary} />}
-          />
+          {habits.map((h) => (
+            <M3Chip
+              key={h.id}
+              label={h.name}
+              selected={Boolean(h.is_logged_today)}
+              onPress={() => toggleHabit(h.id)}
+              badge={`${h.streak_current}d`}
+              icon={
+                <Ionicons
+                  name={h.is_logged_today ? 'flame' : 'flame-outline'}
+                  size={14}
+                  color={h.is_logged_today ? colors.onPrimary : colors.primary}
+                />
+              }
+            />
+          ))}
         </View>
 
-        {/* Space for bottom navigation and floating button */}
         <View style={{ height: 100 }} />
       </ScrollView>
 

@@ -7,6 +7,8 @@ import {
   Pressable,
   ScrollView,
   Platform,
+  KeyboardAvoidingView,
+  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +16,10 @@ import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { M3Button } from '@/src/components/ui/M3Button';
 import { M3Chip } from '@/src/components/ui/M3Chip';
 import { haptic } from '@/src/design-system/haptics';
+import { TaskRepository } from '@/src/repositories/TaskRepository';
+import { NoteRepository } from '@/src/repositories/NoteAndGoalRepository';
+import { FinanceRepository } from '@/src/repositories/FinanceRepository';
+import { NotificationService } from '@/src/services/NotificationService';
 
 type CaptureType = 'task' | 'note' | 'reminder' | 'expense';
 
@@ -24,16 +30,63 @@ export default function QuickCaptureModal() {
   const [notes, setNotes] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [amount, setAmount] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim()) return;
-    haptic.success();
-    // Closes modal
-    router.back();
+    setIsSubmitting(true);
+    try {
+      if (captureType === 'task') {
+        await TaskRepository.createTask({
+          title: title.trim(),
+          description: notes.trim() || undefined,
+          priority,
+          due_date: 'Today',
+        });
+      } else if (captureType === 'note') {
+        await NoteRepository.createNote({
+          title: title.trim(),
+          content: notes.trim() || title.trim(),
+        });
+      } else if (captureType === 'expense') {
+        const parsedAmount = parseFloat(amount || '0');
+        const amountCents = Math.round(parsedAmount * 100);
+        await FinanceRepository.createTransaction({
+          type: 'expense',
+          amount_cents: amountCents,
+          category: 'General',
+          description: title.trim(),
+        });
+      } else if (captureType === 'reminder') {
+        // Schedule reminder 1 hour from now
+        const trigger = new Date(Date.now() + 60 * 60 * 1000);
+        await NotificationService.scheduleReminder({
+          title: title.trim(),
+          body: notes.trim() || 'Scheduled reminder from LifeOS',
+          triggerDate: trigger,
+        });
+        await TaskRepository.createTask({
+          title: `Reminder: ${title.trim()}`,
+          description: notes.trim() || undefined,
+          priority: 'high',
+          due_date: 'In 1 hour',
+        });
+      }
+
+      haptic.success();
+      router.back();
+    } catch (err: any) {
+      Alert.alert('Save Failed', err.message || 'Could not save record to SQLite');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       {/* Header Bar */}
       <View style={[styles.header, { borderBottomColor: colors.divider }]}>
         <View style={styles.headerLeft}>
@@ -41,7 +94,7 @@ export default function QuickCaptureModal() {
             Quick Capture
           </Text>
           <Text style={[typography.bodySmall, { color: colors.onSurfaceVariant }]}>
-            Instant capture into LifeOS
+            Direct persistence to local SQLite
           </Text>
         </View>
         <Pressable
@@ -102,7 +155,7 @@ export default function QuickCaptureModal() {
               : captureType === 'note'
               ? 'e.g. LifeOS architecture ideas'
               : captureType === 'reminder'
-              ? 'e.g. Check server backups at 6 PM'
+              ? 'e.g. Check server backups'
               : 'e.g. Coffee & sandwich'
           }
           placeholderTextColor={colors.outline}
@@ -118,7 +171,7 @@ export default function QuickCaptureModal() {
           autoFocus
         />
 
-        {/* Additional field based on type */}
+        {/* Amount field for Expense */}
         {captureType === 'expense' && (
           <>
             <Text style={[typography.labelMedium, { color: colors.onSurfaceVariant, marginTop: 14, marginBottom: 6 }]}>
@@ -143,6 +196,7 @@ export default function QuickCaptureModal() {
           </>
         )}
 
+        {/* Priority field for Task */}
         {captureType === 'task' && (
           <>
             <Text style={[typography.labelMedium, { color: colors.onSurfaceVariant, marginTop: 14, marginBottom: 6 }]}>
@@ -193,15 +247,16 @@ export default function QuickCaptureModal() {
         {/* Save Button */}
         <View style={styles.submitContainer}>
           <M3Button
-            title="Save to LifeOS"
+            title={isSubmitting ? 'Saving to Database...' : 'Save to LifeOS'}
             onPress={handleSave}
             variant="filled"
             size="large"
-            disabled={!title.trim()}
+            disabled={!title.trim() || isSubmitting}
+            loading={isSubmitting}
           />
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
