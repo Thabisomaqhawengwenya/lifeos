@@ -23,7 +23,7 @@ import { GlobalSearchModal } from '@/src/components/search/GlobalSearchModal';
 type FilterType = 'all' | 'today' | 'upcoming' | 'completed';
 
 export default function TasksScreen() {
-  const { colors, spacing, radii, typography } = useAppTheme();
+  const { colors, spacing, isDark } = useAppTheme();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -57,12 +57,6 @@ export default function TasksScreen() {
     await loadTasks();
   };
 
-  const handleDelete = async (id: string) => {
-    haptic.warning();
-    await TaskRepository.deleteTask(id);
-    await loadTasks();
-  };
-
   const filteredTasks = tasks.filter((t) => {
     if (activeFilter === 'today') return (t.due_date || '').includes('Today');
     if (activeFilter === 'upcoming') return !t.is_completed && !(t.due_date || '').includes('Today');
@@ -71,197 +65,181 @@ export default function TasksScreen() {
   });
 
   const pendingCount = tasks.filter((t) => !t.is_completed).length;
+  const shadowColor = isDark ? '#FFFFFF' : '#000000';
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <M3Header
-        title="Tasks & Deliverables"
-        subtitle={`${pendingCount} active items in local SQLite`}
+        badge="DELIVERABLES • CRITICAL"
+        title="Tasks Matrix"
+        subtitle={`${pendingCount} open deliverables in local SQLite`}
         rightAction={
           <Pressable
             onPress={() => setSearchVisible(true)}
-            style={[styles.searchHeaderBtn, { backgroundColor: colors.surfaceVariant, borderRadius: radii.full }]}
+            style={[
+              styles.searchHeaderBtn,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                shadowColor,
+              },
+            ]}
             accessibilityRole="button"
             accessibilityLabel="Search all items"
           >
-            <Ionicons name="search" size={20} color={colors.onSurface} />
+            <Ionicons name="search" size={18} color={colors.onBackground} />
           </Pressable>
         }
       />
 
       {/* Filter Chips Bar */}
-      <View style={styles.filterStrip}>
+      <View style={[styles.filterStrip, { borderBottomColor: colors.border }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
           <M3Chip
-            label="All Tasks"
+            label="ALL"
             selected={activeFilter === 'all'}
             onPress={() => setActiveFilter('all')}
             badge={tasks.length}
           />
           <M3Chip
-            label="Due Today"
+            label="TODAY"
             selected={activeFilter === 'today'}
             onPress={() => setActiveFilter('today')}
+            colorScheme="coral"
             badge={tasks.filter((t) => (t.due_date || '').includes('Today')).length}
           />
           <M3Chip
-            label="Upcoming"
+            label="UPCOMING"
             selected={activeFilter === 'upcoming'}
             onPress={() => setActiveFilter('upcoming')}
+            colorScheme="sky"
           />
           <M3Chip
-            label="Completed"
+            label="DONE"
             selected={activeFilter === 'completed'}
             onPress={() => setActiveFilter('completed')}
+            colorScheme="mint"
             badge={tasks.filter((t) => t.is_completed).length}
           />
         </ScrollView>
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.lg }]}
+        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.base }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.accentYellow} />
         }
       >
         {filteredTasks.length === 0 ? (
           <M3EmptyState
             icon="checkbox-outline"
-            title="All Caught Up"
-            description="No deliverables match your current filter. Enjoy your momentum or capture a new task."
-            actionTitle="Add New Task"
+            title="NO DELIVERABLES FOUND"
+            description="No items match your filter criteria. Capture a new task to keep your momentum high."
+            actionTitle="ADD NEW DELIVERABLE"
             onAction={() => router.push('/modal')}
           />
         ) : (
-          filteredTasks.map((task) => {
-            const priorityColor =
-              task.priority === 'high'
-                ? colors.error
-                : task.priority === 'medium'
-                ? colors.warning
-                : colors.primary;
+          filteredTasks.map((task) => (
+            <M3Card
+              key={task.id}
+              variant="elevated"
+              style={[
+                styles.taskCard,
+                task.is_completed && { opacity: 0.65 },
+              ]}
+              onPress={() => setSelectedTask(task)}
+            >
+              <View style={styles.taskCardRow}>
+                <Pressable
+                  onPress={() => handleToggle(task.id)}
+                  style={[
+                    styles.checkbox,
+                    {
+                      borderColor: '#000000',
+                      backgroundColor: task.is_completed ? colors.accentYellow : colors.surface,
+                    },
+                  ]}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: task.is_completed }}
+                >
+                  {task.is_completed && (
+                    <Ionicons name="checkmark" size={18} color="#000000" />
+                  )}
+                </Pressable>
 
-            return (
-              <M3Card
-                key={task.id}
-                variant="elevated"
-                style={[
-                  styles.taskCard,
-                  task.is_completed && { opacity: 0.65, backgroundColor: colors.surfaceVariant },
-                ]}
-                onPress={() => setSelectedTask(task)}
-              >
-                <View style={styles.taskCardRow}>
-                  <Pressable
-                    onPress={() => handleToggle(task.id)}
+                <View style={styles.taskBody}>
+                  <Text
                     style={[
-                      styles.checkbox,
+                      styles.taskTitle,
                       {
-                        borderColor: task.is_completed ? colors.primary : colors.outline,
-                        backgroundColor: task.is_completed ? colors.primary : 'transparent',
-                        borderRadius: radii.xs,
+                        color: colors.onSurface,
+                        textDecorationLine: task.is_completed ? 'line-through' : 'none',
                       },
                     ]}
-                    accessibilityRole="checkbox"
-                    accessibilityState={{ checked: task.is_completed }}
                   >
-                    {task.is_completed && (
-                      <Ionicons name="checkmark" size={16} color={colors.onPrimary} />
-                    )}
-                  </Pressable>
+                    {task.title}
+                  </Text>
 
-                  <View style={styles.taskBody}>
+                  {task.description ? (
                     <Text
                       style={[
-                        typography.titleMedium,
+                        styles.taskDesc,
+                        { color: isDark ? '#A0A0A0' : '#555555' },
+                      ]}
+                      numberOfLines={2}
+                    >
+                      {task.description}
+                    </Text>
+                  ) : null}
+
+                  <View style={styles.taskTagsRow}>
+                    <View style={styles.categoryBadge}>
+                      <Text style={styles.categoryBadgeText}>
+                        {task.category.toUpperCase()}
+                      </Text>
+                    </View>
+
+                    <View
+                      style={[
+                        styles.priorityBadge,
                         {
-                          color: task.is_completed ? colors.onSurfaceVariant : colors.onSurface,
-                          textDecorationLine: task.is_completed ? 'line-through' : 'none',
+                          backgroundColor:
+                            task.priority === 'high'
+                              ? colors.accentRed
+                              : task.priority === 'medium'
+                              ? colors.accentYellow
+                              : colors.accentSky,
                         },
                       ]}
                     >
-                      {task.title}
-                    </Text>
-
-                    {task.description ? (
                       <Text
                         style={[
-                          typography.bodySmall,
-                          { color: colors.onSurfaceVariant, marginTop: 2 },
+                          styles.priorityText,
+                          { color: task.priority === 'high' ? '#FFFFFF' : '#000000' },
                         ]}
                       >
-                        {task.description}
-                      </Text>
-                    ) : null}
-
-                    <View style={styles.taskTagsRow}>
-                      <View
-                        style={[
-                          styles.categoryBadge,
-                          {
-                            backgroundColor: colors.surfaceVariant,
-                            borderRadius: radii.full,
-                          },
-                        ]}
-                      >
-                        <Text style={[typography.labelSmall, { color: colors.onSurfaceVariant }]}>
-                          {task.category}
-                        </Text>
-                      </View>
-
-                      <Text style={[typography.labelSmall, { color: priorityColor, marginLeft: 8 }]}>
                         {task.priority.toUpperCase()}
                       </Text>
-
-                      {task.due_date && (
-                        <Text
-                          style={[
-                            typography.labelSmall,
-                            { color: colors.onSurfaceVariant, marginLeft: 8 },
-                          ]}
-                        >
-                          • {task.due_date}
-                        </Text>
-                      )}
-
-                      {task.subtask_count ? (
-                        <View style={styles.subtaskBadge}>
-                          <Ionicons
-                            name="git-branch-outline"
-                            size={12}
-                            color={colors.onSurfaceVariant}
-                          />
-                          <Text
-                            style={[
-                              typography.labelSmall,
-                              { color: colors.onSurfaceVariant, marginLeft: 4 },
-                            ]}
-                          >
-                            {task.completed_subtasks}/{task.subtask_count}
-                          </Text>
-                        </View>
-                      ) : null}
                     </View>
-                  </View>
 
-                  <Pressable
-                    onPress={() => handleDelete(task.id)}
-                    style={styles.deleteButton}
-                    accessibilityRole="button"
-                    accessibilityLabel="Delete task"
-                  >
-                    <Ionicons name="trash-outline" size={18} color={colors.outline} />
-                  </Pressable>
+                    {task.due_date && (
+                      <View style={styles.dueBadge}>
+                        <Ionicons name="time-outline" size={12} color="#000000" />
+                        <Text style={styles.dueText}>{task.due_date}</Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
-              </M3Card>
-            );
-          })
+              </View>
+            </M3Card>
+          ))
         )}
 
         <View style={{ height: 100 }} />
       </ScrollView>
 
+      {/* Floating Action Button */}
       <M3FAB
         onPress={() => {
           haptic.medium();
@@ -293,58 +271,114 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   searchHeaderBtn: {
-    padding: 8,
+    width: 38,
+    height: 38,
+    borderWidth: 2,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
   },
   filterStrip: {
     paddingVertical: 10,
+    borderBottomWidth: 2.5,
   },
   filterScroll: {
     paddingHorizontal: 16,
     gap: 8,
   },
   scrollContent: {
-    paddingTop: 6,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
   taskCard: {
     marginBottom: 12,
-    padding: 14,
   },
   taskCardRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
   checkbox: {
-    width: 22,
-    height: 22,
-    borderWidth: 2,
+    width: 26,
+    height: 26,
+    borderWidth: 2.5,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
     marginTop: 2,
+    shadowColor: '#000000',
+    shadowOffset: { width: 1.5, height: 1.5 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
   },
   taskBody: {
     flex: 1,
   },
+  taskTitle: {
+    fontFamily: 'SpaceMono',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  taskDesc: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 4,
+    lineHeight: 16,
+  },
   taskTagsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 6,
     flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 8,
   },
   categoryBadge: {
-    paddingHorizontal: 8,
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    backgroundColor: '#FFFFFF',
+  },
+  categoryBadgeText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  priorityBadge: {
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    borderRadius: 4,
+    paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  subtaskBadge: {
+  priorityText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  dueBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 10,
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    backgroundColor: '#FFFFFF',
+    gap: 4,
   },
-  deleteButton: {
-    padding: 4,
-    marginLeft: 6,
+  dueText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#000000',
   },
   fab: {
     position: 'absolute',

@@ -31,20 +31,28 @@ export function M3FAB({
   accessibilityLabel = 'Create new item',
 }: M3FABProps) {
   const { colors, radii, isDark } = useAppTheme();
-  const scale = useSharedValue(1);
+  const pressedX = useSharedValue(0);
+  const pressedY = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [
+      { translateX: pressedX.value },
+      { translateY: pressedY.value },
+    ],
   }));
 
   const handlePressIn = () => {
-    scale.value = withTiming(0.92, { duration: 100 });
-    haptic.medium();
+    pressedX.value = withTiming(2, { duration: 60 });
+    pressedY.value = withTiming(2, { duration: 60 });
+    haptic.heavy();
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 12, stiffness: 280 });
+    pressedX.value = withSpring(0, { damping: 15, stiffness: 350 });
+    pressedY.value = withSpring(0, { damping: 15, stiffness: 350 });
   };
+
+  const shadowColor = isDark ? '#FFFFFF' : '#000000';
 
   return (
     <AnimatedPressable
@@ -54,10 +62,10 @@ export function M3FAB({
       style={[
         styles.fab,
         {
-          backgroundColor: colors.primary,
-          borderRadius: radii.xl,
-          shadowColor: colors.shadow,
-          shadowOpacity: isDark ? 0.4 : 0.2,
+          backgroundColor: colors.accentYellow,
+          borderColor: colors.border,
+          borderRadius: radii.md,
+          shadowColor,
         },
         animatedStyle,
         style,
@@ -65,19 +73,21 @@ export function M3FAB({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
     >
-      <Ionicons name={icon} size={28} color={colors.onPrimary} />
+      <Ionicons name={icon} size={28} color="#000000" />
     </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
   fab: {
-    width: 56,
-    height: 56,
+    width: 58,
+    height: 58,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
+    borderWidth: 2.5,
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
     elevation: 6,
   },
 });

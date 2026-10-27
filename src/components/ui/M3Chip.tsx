@@ -23,6 +23,7 @@ interface M3ChipProps {
   icon?: React.ReactNode;
   badge?: number | string;
   style?: StyleProp<ViewStyle>;
+  colorScheme?: 'yellow' | 'coral' | 'mint' | 'lilac' | 'sky';
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -34,26 +35,40 @@ export function M3Chip({
   icon,
   badge,
   style,
+  colorScheme = 'yellow',
 }: M3ChipProps) {
-  const { colors, radii, spacing, typography } = useAppTheme();
-  const scale = useSharedValue(1);
+  const { colors, radii, spacing, isDark } = useAppTheme();
+  const pressedX = useSharedValue(0);
+  const pressedY = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [
+      { translateX: pressedX.value },
+      { translateY: pressedY.value },
+    ],
   }));
 
   const handlePressIn = () => {
-    scale.value = withTiming(0.95, { duration: 100 });
+    pressedX.value = withTiming(1.5, { duration: 50 });
+    pressedY.value = withTiming(1.5, { duration: 50 });
     haptic.selection();
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    pressedX.value = withSpring(0, { damping: 15, stiffness: 350 });
+    pressedY.value = withSpring(0, { damping: 15, stiffness: 350 });
   };
 
-  const backgroundColor = selected ? colors.primary : colors.surfaceVariant;
-  const textColor = selected ? colors.onPrimary : colors.onSurfaceVariant;
-  const borderColor = selected ? colors.primary : colors.outlineVariant;
+  let activeBg = colors.accentYellow;
+  if (colorScheme === 'mint') activeBg = colors.accentJade;
+  else if (colorScheme === 'coral') activeBg = colors.accentCoral;
+  else if (colorScheme === 'lilac') activeBg = colors.accentLilac;
+  else if (colorScheme === 'sky') activeBg = colors.accentSky;
+
+  const backgroundColor = selected ? activeBg : colors.surface;
+  const textColor = '#000000';
+  const borderColor = colors.border;
+  const shadowColor = isDark ? '#FFFFFF' : '#000000';
 
   return (
     <AnimatedPressable
@@ -65,9 +80,14 @@ export function M3Chip({
         {
           backgroundColor,
           borderColor,
-          borderRadius: radii.full,
+          borderRadius: radii.sm,
           paddingHorizontal: spacing.md,
           paddingVertical: spacing.xs + 2,
+          shadowColor,
+          shadowOffset: { width: 2, height: 2 },
+          shadowOpacity: 1,
+          shadowRadius: 0,
+          elevation: 2,
         },
         animatedStyle,
         style,
@@ -76,21 +96,23 @@ export function M3Chip({
       accessibilityState={{ selected }}
     >
       {icon && <View style={styles.icon}>{icon}</View>}
-      <Text style={[typography.labelMedium, { color: textColor }]}>{label}</Text>
+      <Text style={[styles.label, { color: textColor }]}>{label}</Text>
       {badge !== undefined && (
         <View
           style={[
             styles.badge,
             {
-              backgroundColor: selected ? colors.onPrimary : colors.primary,
-              borderRadius: radii.full,
+              backgroundColor: selected ? '#000000' : colors.accentYellow,
+              borderRadius: radii.xs,
+              borderColor: '#000000',
+              borderWidth: 1,
             },
           ]}
         >
           <Text
             style={[
-              typography.labelSmall,
-              { color: selected ? colors.primary : colors.onPrimary, fontSize: 10 },
+              styles.badgeText,
+              { color: selected ? '#FFFFFF' : '#000000' },
             ]}
           >
             {badge}
@@ -106,18 +128,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 2,
     minHeight: 34,
+  },
+  label: {
+    fontFamily: 'SpaceMono',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   icon: {
     marginRight: 6,
   },
   badge: {
     marginLeft: 6,
-    paddingHorizontal: 6,
+    paddingHorizontal: 5,
     paddingVertical: 1,
-    minWidth: 18,
+    minWidth: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  badgeText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 10,
+    fontWeight: '700',
   },
 });

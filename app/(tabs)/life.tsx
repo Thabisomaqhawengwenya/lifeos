@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   ScrollView,
   View,
@@ -7,7 +7,6 @@ import {
   Pressable,
   Alert,
   TextInput,
-  Platform,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,11 +25,12 @@ import { SecurityService } from '@/src/services/SecurityService';
 import { LicenseService, LicenseInfo } from '@/src/services/LicenseService';
 import { CurrencyService, CurrencyConfig, SupportedCurrency, CURRENCIES } from '@/src/services/CurrencyService';
 import { NoteEditorModal } from '@/src/components/notes/NoteEditorModal';
+import { updateService, UpdateStatus } from '@/src/services/UpdateService';
 
-type LifeSection = 'habits' | 'goals' | 'finance' | 'notes' | 'backup';
+type LifeSection = 'habits' | 'goals' | 'finance' | 'notes' | 'vault';
 
 export default function LifeScreen() {
-  const { colors, spacing, radii, typography } = useAppTheme();
+  const { colors, spacing, isDark } = useAppTheme();
   const [activeSection, setActiveSection] = useState<LifeSection>('habits');
   const [habits, setHabits] = useState<HabitItem[]>([]);
   const [goals, setGoals] = useState<GoalItem[]>([]);
@@ -52,6 +52,12 @@ export default function LifeScreen() {
   const [keyInput, setKeyInput] = useState('');
   const [selectedNote, setSelectedNote] = useState<NoteItem | null>(null);
   const [noteModalVisible, setNoteModalVisible] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>(updateService.getStatus());
+
+  useEffect(() => {
+    const unsub = updateService.subscribe((s) => setUpdateStatus(s));
+    return () => unsub();
+  }, []);
 
   const loadData = useCallback(async () => {
     try {
@@ -133,62 +139,88 @@ export default function LifeScreen() {
     }
   };
 
+  const handleCheckUpdate = async () => {
+    haptic.medium();
+    const found = await updateService.checkForUpdates(true);
+    if (!found) {
+      Alert.alert('Update Check Complete', 'LifeOS is running the latest available build.');
+    }
+  };
+
+  const handleApplyUpdate = async () => {
+    haptic.heavy();
+    await updateService.applyUpdate();
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <M3Header
+        badge="LIFE OS • SYSTEM HUB"
         title="Life Management"
         subtitle="Habits, Goals, Finance, Notes & Security"
       />
 
-      {/* Module Selector Chips */}
-      <View style={styles.sectionChips}>
-        <M3Chip
-          label="Habits"
-          selected={activeSection === 'habits'}
-          onPress={() => setActiveSection('habits')}
-          icon={<Ionicons name="flame" size={14} color={activeSection === 'habits' ? colors.onPrimary : colors.primary} />}
-        />
-        <M3Chip
-          label="Goals"
-          selected={activeSection === 'goals'}
-          onPress={() => setActiveSection('goals')}
-          icon={<Ionicons name="trophy" size={14} color={activeSection === 'goals' ? colors.onPrimary : colors.primary} />}
-        />
-        <M3Chip
-          label="Finance"
-          selected={activeSection === 'finance'}
-          onPress={() => setActiveSection('finance')}
-          icon={<Ionicons name="wallet" size={14} color={activeSection === 'finance' ? colors.onPrimary : colors.primary} />}
-        />
-        <M3Chip
-          label="Notes"
-          selected={activeSection === 'notes'}
-          onPress={() => setActiveSection('notes')}
-          icon={<Ionicons name="document-text" size={14} color={activeSection === 'notes' ? colors.onPrimary : colors.primary} />}
-        />
-        <M3Chip
-          label="Vault"
-          selected={activeSection === 'backup'}
-          onPress={() => setActiveSection('backup')}
-          icon={<Ionicons name="shield-checkmark" size={14} color={activeSection === 'backup' ? colors.onPrimary : colors.primary} />}
-        />
+      {/* Module Selector Chips (Brutalist Sticker Chips) */}
+      <View style={[styles.sectionChips, { borderBottomColor: colors.border }]}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsScroll}>
+          <M3Chip
+            label="HABITS"
+            selected={activeSection === 'habits'}
+            onPress={() => setActiveSection('habits')}
+            colorScheme="mint"
+            icon={<Ionicons name="flame" size={14} color="#000000" />}
+          />
+          <M3Chip
+            label="GOALS"
+            selected={activeSection === 'goals'}
+            onPress={() => setActiveSection('goals')}
+            colorScheme="yellow"
+            icon={<Ionicons name="trophy" size={14} color="#000000" />}
+          />
+          <M3Chip
+            label="FINANCE"
+            selected={activeSection === 'finance'}
+            onPress={() => setActiveSection('finance')}
+            colorScheme="coral"
+            icon={<Ionicons name="wallet" size={14} color="#000000" />}
+          />
+          <M3Chip
+            label="NOTES"
+            selected={activeSection === 'notes'}
+            onPress={() => setActiveSection('notes')}
+            colorScheme="sky"
+            icon={<Ionicons name="document-text" size={14} color="#000000" />}
+          />
+          <M3Chip
+            label="VAULT & OTA"
+            selected={activeSection === 'vault'}
+            onPress={() => setActiveSection('vault')}
+            colorScheme="lilac"
+            icon={<Ionicons name="shield-checkmark" size={14} color="#000000" />}
+          />
+        </ScrollView>
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.lg }]}
+        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.base }]}
         showsVerticalScrollIndicator={false}
       >
+        {/* HABITS SECTION */}
         {activeSection === 'habits' && (
           <>
-            <Text style={[typography.titleLarge, { color: colors.onBackground, marginBottom: 12 }]}>
-              Active Habit Streaks ({habits.length})
-            </Text>
+            <View style={styles.sectionHeaderRow}>
+              <View style={[styles.sectionDot, { backgroundColor: colors.accentJade }]} />
+              <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>
+                ACTIVE HABIT STREAKS ({habits.length})
+              </Text>
+            </View>
+
             {habits.length === 0 ? (
               <M3EmptyState
                 icon="flame-outline"
-                title="No Habits Tracked Yet"
-                description="Form daily momentum by creating your first personal habit."
-                actionTitle="Create Habit"
+                title="NO HABITS TRACKED YET"
+                description="Build daily momentum by tracking your first routine."
+                actionTitle="CREATE HABIT"
                 onAction={() => router.push('/modal')}
               />
             ) : (
@@ -196,11 +228,11 @@ export default function LifeScreen() {
                 <M3Card key={h.id} variant="elevated" style={styles.cardItem}>
                   <View style={styles.cardHeaderRow}>
                     <View style={styles.cardTitleArea}>
-                      <Text style={[typography.titleMedium, { color: colors.onSurface }]}>
+                      <Text style={[styles.cardTitle, { color: colors.onSurface }]}>
                         {h.name}
                       </Text>
-                      <Text style={[typography.bodySmall, { color: colors.onSurfaceVariant, marginTop: 2 }]}>
-                        Target: {h.target_days_per_week} days/week • {h.description || 'Consistency block'}
+                      <Text style={[styles.cardSubtitle, { color: isDark ? '#A0A0A0' : '#555555' }]}>
+                        Target: {h.target_days_per_week} days/week • {h.description || 'Focus block'}
                       </Text>
                     </View>
                     <Pressable
@@ -208,26 +240,17 @@ export default function LifeScreen() {
                       style={[
                         styles.streakBadge,
                         {
-                          backgroundColor: h.is_logged_today ? colors.primary : colors.surfaceVariant,
-                          borderRadius: radii.full,
+                          backgroundColor: h.is_logged_today ? colors.accentJade : colors.surface,
+                          borderColor: '#000000',
                         },
                       ]}
                     >
                       <Ionicons
                         name="flame"
                         size={14}
-                        color={h.is_logged_today ? colors.onPrimary : colors.accentGold}
+                        color={h.is_logged_today ? '#000000' : colors.accentCoral}
                       />
-                      <Text
-                        style={[
-                          typography.labelSmall,
-                          {
-                            color: h.is_logged_today ? colors.onPrimary : colors.onSurface,
-                            fontWeight: '700',
-                            marginLeft: 4,
-                          },
-                        ]}
-                      >
+                      <Text style={styles.streakText}>
                         {h.streak_current}d {h.is_logged_today ? '✓' : ''}
                       </Text>
                     </Pressable>
@@ -238,63 +261,67 @@ export default function LifeScreen() {
           </>
         )}
 
+        {/* GOALS SECTION */}
         {activeSection === 'goals' && (
           <>
             <View style={styles.sectionHeaderRow}>
-              <Text style={[typography.titleLarge, { color: colors.onBackground }]}>
-                Key Milestones & Goals ({goals.length})
+              <View style={[styles.sectionDot, { backgroundColor: colors.accentYellow }]} />
+              <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>
+                KEY MILESTONES & TARGETS ({goals.length})
               </Text>
             </View>
 
             {goals.length === 0 ? (
               <M3EmptyState
                 icon="trophy-outline"
-                title="No Goals Configured"
-                description="Define long-term horizons and track incremental progress."
-                actionTitle="Create Goal"
+                title="NO ACTIVE GOALS"
+                description="Define long-term targets and track your incremental progress."
+                actionTitle="CREATE GOAL"
                 onAction={() => router.push('/modal')}
               />
             ) : (
               goals.map((g) => (
                 <M3Card key={g.id} variant="elevated" style={styles.cardItem}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <View style={{ flex: 1, paddingRight: 8 }}>
-                      <Text style={[typography.titleMedium, { color: colors.onSurface }]}>
+                  <View style={styles.goalHeaderRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.cardTitle, { color: colors.onSurface }]}>
                         {g.title}
                       </Text>
-                      <Text style={[typography.bodySmall, { color: colors.onSurfaceVariant, marginTop: 4 }]}>
-                        {g.description || 'Deliverable'} • {g.progress_percent}% completed
+                      <Text style={[styles.cardSubtitle, { color: isDark ? '#A0A0A0' : '#555555' }]}>
+                        Target: {g.target_date || 'Ongoing'}
                       </Text>
                     </View>
-
-                    {/* Steppers */}
-                    <View style={styles.steppersRow}>
-                      <Pressable
-                        onPress={() => handleUpdateGoalProgress(g.id, g.progress_percent, -10)}
-                        style={[styles.stepBtn, { backgroundColor: colors.surfaceVariant, borderRadius: radii.full }]}
-                      >
-                        <Ionicons name="remove" size={16} color={colors.onSurface} />
-                      </Pressable>
-                      <Pressable
-                        onPress={() => handleUpdateGoalProgress(g.id, g.progress_percent, 10)}
-                        style={[styles.stepBtn, { backgroundColor: colors.primaryContainer, borderRadius: radii.full, marginLeft: 6 }]}
-                      >
-                        <Ionicons name="add" size={16} color={colors.onPrimaryContainer} />
-                      </Pressable>
+                    <View style={[styles.percentBadge, { backgroundColor: colors.accentYellow }]}>
+                      <Text style={styles.percentText}>{g.progress_percent}%</Text>
                     </View>
                   </View>
 
-                  <View style={[styles.progressBarBg, { backgroundColor: colors.surfaceVariant, borderRadius: radii.full }]}>
+                  {/* Brutalist Progress Bar */}
+                  <View style={styles.progressTrack}>
                     <View
                       style={[
-                        styles.progressBarFill,
+                        styles.progressFill,
                         {
-                          width: `${g.progress_percent}%`,
-                          backgroundColor: g.progress_percent === 100 ? colors.success : colors.primary,
-                          borderRadius: radii.full,
+                          width: `${Math.min(100, Math.max(0, g.progress_percent))}%`,
+                          backgroundColor: colors.accentYellow,
                         },
                       ]}
                     />
+                  </View>
+
+                  <View style={styles.stepperRow}>
+                    <Pressable
+                      onPress={() => handleUpdateGoalProgress(g.id, g.progress_percent, -10)}
+                      style={styles.stepBtn}
+                    >
+                      <Text style={styles.stepBtnText}>- 10%</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handleUpdateGoalProgress(g.id, g.progress_percent, +10)}
+                      style={[styles.stepBtn, { backgroundColor: colors.accentYellow }]}
+                    >
+                      <Text style={styles.stepBtnText}>+ 10%</Text>
+                    </Pressable>
                   </View>
                 </M3Card>
               ))
@@ -302,112 +329,121 @@ export default function LifeScreen() {
           </>
         )}
 
+        {/* FINANCE SECTION */}
         {activeSection === 'finance' && (
           <>
-            {/* Currency Selector Bar */}
-            <View style={styles.currencySelectorRow}>
-              <Text style={[typography.labelMedium, { color: colors.onSurfaceVariant, marginRight: 8 }]}>
-                CURRENCY:
+            <View style={styles.sectionHeaderRow}>
+              <View style={[styles.sectionDot, { backgroundColor: colors.accentCoral }]} />
+              <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>
+                FINANCIAL LEDGER & CASHBOX
               </Text>
-              {(['USD', 'ZiG', 'ZAR'] as SupportedCurrency[]).map((code) => (
-                <M3Chip
-                  key={code}
-                  label={code}
-                  selected={currency.code === code}
-                  onPress={() => handleSwitchCurrency(code)}
-                />
+            </View>
+
+            {/* Currency Switcher */}
+            <View style={styles.currencyRow}>
+              {(['USD', 'ZiG', 'ZAR', 'EUR', 'GBP'] as SupportedCurrency[]).map((c) => (
+                <Pressable
+                  key={c}
+                  onPress={() => handleSwitchCurrency(c)}
+                  style={[
+                    styles.currChip,
+                    currency.code === c && {
+                      backgroundColor: colors.accentYellow,
+                      shadowColor: '#000000',
+                      shadowOffset: { width: 2, height: 2 },
+                      shadowOpacity: 1,
+                      shadowRadius: 0,
+                      elevation: 2,
+                    },
+                  ]}
+                >
+                  <Text style={styles.currChipText}>{c}</Text>
+                </Pressable>
               ))}
             </View>
 
+            {/* Cashbox Summary */}
             <M3Card variant="elevated" style={styles.cardItem}>
-              <View style={styles.financeMetricsRow}>
-                <View>
-                  <Text style={[typography.labelSmall, { color: colors.onSurfaceVariant }]}>
-                    TOTAL EXPENSES
-                  </Text>
-                  <Text style={[typography.headlineMedium, { color: colors.error, marginTop: 2 }]}>
-                    {CurrencyService.formatCents(financeSummary.total_expense_cents, currency)}
-                  </Text>
-                </View>
-                <View>
-                  <Text style={[typography.labelSmall, { color: colors.onSurfaceVariant }]}>
-                    TOTAL INCOME
-                  </Text>
-                  <Text style={[typography.headlineMedium, { color: colors.success, marginTop: 2 }]}>
+              <View style={styles.cashboxGrid}>
+                <View style={[styles.cashboxCol, { backgroundColor: colors.accentJade }]}>
+                  <Text style={styles.cashboxLbl}>INCOME</Text>
+                  <Text style={styles.cashboxVal}>
                     {CurrencyService.formatCents(financeSummary.total_income_cents, currency)}
                   </Text>
                 </View>
-                <View>
-                  <Text style={[typography.labelSmall, { color: colors.onSurfaceVariant }]}>
-                    NET BALANCE
+                <View style={[styles.cashboxCol, { backgroundColor: colors.accentCoral }]}>
+                  <Text style={[styles.cashboxLbl, { color: '#FFFFFF' }]}>EXPENSES</Text>
+                  <Text style={[styles.cashboxVal, { color: '#FFFFFF' }]}>
+                    {CurrencyService.formatCents(financeSummary.total_expense_cents, currency)}
                   </Text>
-                  <Text style={[typography.headlineMedium, { color: colors.primary, marginTop: 2 }]}>
+                </View>
+                <View style={[styles.cashboxCol, { backgroundColor: colors.accentYellow }]}>
+                  <Text style={styles.cashboxLbl}>NET BALANCE</Text>
+                  <Text style={styles.cashboxVal}>
                     {CurrencyService.formatCents(financeSummary.net_balance_cents, currency)}
                   </Text>
                 </View>
               </View>
             </M3Card>
 
-            <Text style={[typography.titleMedium, { color: colors.onBackground, marginVertical: 10 }]}>
-              Recent Transactions ({recentTransactions.length})
-            </Text>
+            <View style={styles.subSectionTitleRow}>
+              <Text style={[styles.subSectionTitle, { color: colors.onBackground }]}>
+                RECENT TRANSACTIONS ({recentTransactions.length})
+              </Text>
+            </View>
+
             {recentTransactions.length === 0 ? (
-              <M3Card variant="outlined" style={styles.cardItem}>
-                <Text style={[typography.bodyMedium, { color: colors.onSurfaceVariant, textAlign: 'center' }]}>
-                  No transactions recorded yet. Tap + to record an expense or income.
-                </Text>
-              </M3Card>
+              <M3EmptyState
+                icon="wallet-outline"
+                title="NO TRANSACTIONS LOGGED"
+                description="Keep track of your income and expenses in your local SQLite ledger."
+                actionTitle="LOG EXPENSE"
+                onAction={() => router.push('/modal')}
+              />
             ) : (
               recentTransactions.map((tx) => (
-                <M3Card key={tx.id} variant="outlined" style={styles.txRow}>
-                  <View>
-                    <Text style={[typography.titleSmall, { color: colors.onSurface }]}>
-                      {tx.description || tx.category}
-                    </Text>
-                    <Text style={[typography.labelSmall, { color: colors.onSurfaceVariant }]}>
-                      {tx.category} • {tx.transaction_date}
+                <M3Card key={tx.id} variant="elevated" style={styles.txCard}>
+                  <View style={styles.txRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.cardTitle, { color: colors.onSurface }]}>
+                        {tx.description || tx.category}
+                      </Text>
+                      <Text style={[styles.cardSubtitle, { color: isDark ? '#A0A0A0' : '#555555' }]}>
+                        {tx.category.toUpperCase()} • {tx.transaction_date}
+                      </Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.txAmount,
+                        { color: tx.type === 'income' ? colors.accentMint : colors.accentRed },
+                      ]}
+                    >
+                      {tx.type === 'income' ? '+' : '-'}
+                      {CurrencyService.formatCents(tx.amount_cents, currency)}
                     </Text>
                   </View>
-                  <Text
-                    style={[
-                      typography.titleMedium,
-                      { color: tx.type === 'expense' ? colors.error : colors.success, fontWeight: '700' },
-                    ]}
-                  >
-                    {tx.type === 'expense' ? '-' : '+'}{CurrencyService.formatCents(tx.amount_cents, currency)}
-                  </Text>
                 </M3Card>
               ))
             )}
           </>
         )}
 
+        {/* NOTES SECTION */}
         {activeSection === 'notes' && (
           <>
             <View style={styles.sectionHeaderRow}>
-              <Text style={[typography.titleLarge, { color: colors.onBackground }]}>
-                Personal Notes & Knowledge ({notes.length})
+              <View style={[styles.sectionDot, { backgroundColor: colors.accentSky }]} />
+              <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>
+                PERSONAL NOTES & MEMOS ({notes.length})
               </Text>
-              <Pressable
-                onPress={() => {
-                  setSelectedNote(null);
-                  setNoteModalVisible(true);
-                }}
-                style={[styles.addNoteHeaderBtn, { backgroundColor: colors.primaryContainer, borderRadius: radii.full }]}
-              >
-                <Ionicons name="add" size={16} color={colors.onPrimaryContainer} />
-                <Text style={[typography.labelSmall, { color: colors.onPrimaryContainer, fontWeight: '700', marginLeft: 4 }]}>
-                  NEW NOTE
-                </Text>
-              </Pressable>
             </View>
 
             {notes.length === 0 ? (
               <M3EmptyState
                 icon="document-text-outline"
-                title="Your Knowledge Base is Empty"
-                description="Capture quick ideas, project specs, or meeting memos."
-                actionTitle="Create Note"
+                title="NO NOTES STORED"
+                description="Jot down thoughts, reference snippets, and key ideas."
+                actionTitle="WRITE NOTE"
                 onAction={() => {
                   setSelectedNote(null);
                   setNoteModalVisible(true);
@@ -424,16 +460,19 @@ export default function LifeScreen() {
                     setNoteModalVisible(true);
                   }}
                 >
-                  <Text style={[typography.titleMedium, { color: colors.onSurface }]}>
+                  <Text style={[styles.cardTitle, { color: colors.onSurface }]}>
                     {n.title}
                   </Text>
-                  <Text style={[typography.bodyMedium, { color: colors.onSurfaceVariant, marginTop: 4 }]}>
+                  <Text
+                    style={[styles.cardSubtitle, { color: isDark ? '#A0A0A0' : '#555555', marginTop: 4 }]}
+                    numberOfLines={3}
+                  >
                     {n.content}
                   </Text>
                   {n.tags ? (
-                    <Text style={[typography.labelSmall, { color: colors.primary, marginTop: 8 }]}>
-                      {n.tags}
-                    </Text>
+                    <View style={styles.noteTagBadge}>
+                      <Text style={styles.noteTagText}>#{n.tags.toUpperCase()}</Text>
+                    </View>
                   ) : null}
                 </M3Card>
               ))
@@ -441,102 +480,134 @@ export default function LifeScreen() {
           </>
         )}
 
-        {activeSection === 'backup' && (
+        {/* VAULT & OVER-THE-AIR UPDATES SECTION */}
+        {activeSection === 'vault' && (
           <>
-            <Text style={[typography.titleLarge, { color: colors.onBackground, marginBottom: 12 }]}>
-              Security Vault & Licensing
-            </Text>
+            {/* OTA Wi-Fi Updates Card */}
+            <View style={styles.sectionHeaderRow}>
+              <View style={[styles.sectionDot, { backgroundColor: colors.accentYellow }]} />
+              <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>
+                OVER-THE-AIR (OTA) WI-FI UPDATES
+              </Text>
+            </View>
 
-            {/* License Activation Card */}
             <M3Card variant="elevated" style={styles.cardItem}>
-              <View style={styles.vaultHeader}>
-                <Ionicons name="key-outline" size={24} color={colors.primary} />
-                <Text style={[typography.titleMedium, { color: colors.onSurface, marginLeft: 10 }]}>
-                  Software License & Tier
-                </Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
-                <Text style={[typography.bodyMedium, { color: colors.onSurfaceVariant }]}>
-                  Current Status:{' '}
-                </Text>
+              <View style={styles.otaHeaderRow}>
+                <View>
+                  <Text style={[styles.cardTitle, { color: colors.onSurface }]}>
+                    App Version 1.1.0 (Neo-Brutalism)
+                  </Text>
+                  <Text style={[styles.cardSubtitle, { color: isDark ? '#A0A0A0' : '#555555', marginTop: 2 }]}>
+                    EAS Channel: preview • Wi-Fi Update Daemon Active
+                  </Text>
+                </View>
                 <View
                   style={[
-                    styles.streakBadge,
-                    {
-                      backgroundColor: licenseInfo.isActivated ? colors.primaryContainer : colors.surfaceVariant,
-                      borderRadius: radii.full,
-                      paddingVertical: 2,
-                    },
+                    styles.wifiStatusBadge,
+                    { backgroundColor: updateStatus.isWifi ? colors.accentJade : colors.accentYellow },
                   ]}
                 >
-                  <Text
-                    style={[
-                      typography.labelSmall,
-                      {
-                        color: licenseInfo.isActivated ? colors.onPrimaryContainer : colors.onSurfaceVariant,
-                        fontWeight: '700',
-                      },
-                    ]}
-                  >
-                    {licenseInfo.isActivated ? `LIFETIME ${licenseInfo.tier.toUpperCase()}` : 'COMMUNITY EDITION'}
+                  <Ionicons name={updateStatus.isWifi ? 'wifi' : 'cellular'} size={12} color="#000000" />
+                  <Text style={styles.wifiStatusText}>
+                    {updateStatus.isWifi ? 'WI-FI' : 'CELLULAR'}
                   </Text>
                 </View>
               </View>
 
-              {!licenseInfo.isActivated ? (
-                <View style={{ marginTop: 14 }}>
-                  <TextInput
-                    value={keyInput}
-                    onChangeText={setKeyInput}
-                    placeholder="LIFEOS-PRO-XXXX-XXXXXXXX"
-                    placeholderTextColor={colors.outline}
-                    autoCapitalize="characters"
-                    style={[
-                      styles.licenseInput,
-                      {
-                        backgroundColor: colors.surface,
-                        borderColor: colors.outlineVariant,
-                        color: colors.onSurface,
-                        borderRadius: radii.md,
-                      },
-                    ]}
+              {updateStatus.isDownloaded ? (
+                <View style={styles.updateAvailableBox}>
+                  <Text style={styles.updateAvailableText}>
+                    ⚡ New OTA update has been downloaded. Restart to activate now!
+                  </Text>
+                  <M3Button
+                    title="RESTART & APPLY NOW"
+                    onPress={handleApplyUpdate}
+                    variant="filled"
+                    size="small"
                   />
-                  <View style={{ marginTop: 10 }}>
-                    <M3Button
-                      title="Activate Offline License"
-                      variant="tonal"
-                      size="small"
-                      onPress={handleActivateKey}
-                      disabled={!keyInput.trim()}
-                    />
-                  </View>
                 </View>
               ) : (
-                <Text style={[typography.bodySmall, { color: colors.success, marginTop: 8 }]}>
-                  ✓ Licensed to {licenseInfo.holderName} (Active through {licenseInfo.expiresYear})
-                </Text>
+                <M3Button
+                  title={updateStatus.isChecking ? 'CHECKING...' : 'CHECK FOR UPDATES OVER WI-FI'}
+                  onPress={handleCheckUpdate}
+                  variant="tonal"
+                  size="small"
+                  loading={updateStatus.isChecking}
+                />
               )}
             </M3Card>
 
-            {/* Vault Backup Card */}
-            <M3Card variant="elevated" style={styles.cardItem}>
-              <View style={styles.vaultHeader}>
-                <Ionicons name="shield-checkmark" size={24} color={colors.primary} />
-                <Text style={[typography.titleMedium, { color: colors.onSurface, marginLeft: 10 }]}>
-                  Cryptographic Offline Vault
-                </Text>
-              </View>
-              <Text style={[typography.bodySmall, { color: colors.onSurfaceVariant, marginTop: 8 }]}>
-                LifeOS stores all records in local SQLite with WAL journaling. Generate a verified JSON snapshot with SHA-256 integrity checks at any time.
+            {/* Cryptographic Backup Vault */}
+            <View style={styles.sectionHeaderRow}>
+              <View style={[styles.sectionDot, { backgroundColor: colors.accentLilac }]} />
+              <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>
+                CRYPTOGRAPHIC DATA VAULT
               </Text>
-              <View style={{ marginTop: 16 }}>
+            </View>
+
+            <M3Card variant="elevated" style={styles.cardItem}>
+              <Text style={[styles.cardTitle, { color: colors.onSurface }]}>
+                SHA-256 Vault Snapshot
+              </Text>
+              <Text style={[styles.cardSubtitle, { color: isDark ? '#A0A0A0' : '#555555', marginTop: 4 }]}>
+                Export full JSON backup with cryptographic integrity verification. Zero telemetry, local storage only.
+              </Text>
+              <View style={{ marginTop: 12 }}>
                 <M3Button
-                  title="Export Encrypted Backup JSON"
-                  variant="filled"
-                  size="medium"
+                  title="EXPORT ENCRYPTED BACKUP"
                   onPress={handleExportBackup}
+                  variant="filled"
+                  size="small"
                 />
               </View>
+            </M3Card>
+
+            {/* Offline License Manager */}
+            <View style={styles.sectionHeaderRow}>
+              <View style={[styles.sectionDot, { backgroundColor: colors.accentYellow }]} />
+              <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>
+                OFFLINE LICENSE MANAGER
+              </Text>
+            </View>
+
+            <M3Card variant="elevated" style={styles.cardItem}>
+              <View style={styles.licRow}>
+                <View>
+                  <Text style={[styles.cardTitle, { color: colors.onSurface }]}>
+                    Active Tier: {licenseInfo.tier.toUpperCase()}
+                  </Text>
+                  <Text style={[styles.cardSubtitle, { color: isDark ? '#A0A0A0' : '#555555', marginTop: 2 }]}>
+                    Holder: {licenseInfo.holderName || 'Local Device Owner'}
+                  </Text>
+                </View>
+                <View style={[styles.licBadge, { backgroundColor: colors.accentYellow }]}>
+                  <Text style={styles.licBadgeText}>
+                    {licenseInfo.isActivated ? 'ACTIVATED' : 'FREE'}
+                  </Text>
+                </View>
+              </View>
+
+              <TextInput
+                value={keyInput}
+                onChangeText={setKeyInput}
+                placeholder="Paste LIFEOS-PRO-XXXX-XXXX key"
+                placeholderTextColor="#888888"
+                style={[
+                  styles.licInput,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    color: colors.onSurface,
+                  },
+                ]}
+              />
+
+              <M3Button
+                title="ACTIVATE OFFLINE KEY"
+                onPress={handleActivateKey}
+                variant="tonal"
+                size="small"
+              />
             </M3Card>
           </>
         )}
@@ -544,10 +615,16 @@ export default function LifeScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
+      {/* FAB for creation */}
       <M3FAB
         onPress={() => {
           haptic.medium();
-          router.push('/modal');
+          if (activeSection === 'notes') {
+            setSelectedNote(null);
+            setNoteModalVisible(true);
+          } else {
+            router.push('/modal');
+          }
         }}
         icon="add"
         style={styles.fab}
@@ -557,7 +634,10 @@ export default function LifeScreen() {
       <NoteEditorModal
         visible={noteModalVisible}
         note={selectedNote}
-        onClose={() => setNoteModalVisible(false)}
+        onClose={() => {
+          setNoteModalVisible(false);
+          setSelectedNote(null);
+        }}
         onSaved={loadData}
       />
     </View>
@@ -569,91 +649,276 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionChips: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
     paddingVertical: 10,
+    borderBottomWidth: 2.5,
+  },
+  chipsScroll: {
+    paddingHorizontal: 16,
     gap: 8,
   },
   scrollContent: {
-    paddingTop: 8,
-  },
-  cardItem: {
-    marginBottom: 12,
-    padding: 16,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 6,
     marginBottom: 12,
+    marginTop: 6,
   },
-  addNoteHeaderBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+  sectionDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 2,
+    borderWidth: 1.5,
+    borderColor: '#000000',
+  },
+  sectionTitle: {
+    fontFamily: 'SpaceMono',
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  cardItem: {
+    marginBottom: 12,
   },
   cardHeaderRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   cardTitleArea: {
     flex: 1,
     paddingRight: 10,
   },
+  cardTitle: {
+    fontFamily: 'SpaceMono',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  cardSubtitle: {
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+  },
   streakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    borderWidth: 2,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    shadowColor: '#000000',
+    shadowOffset: { width: 1.5, height: 1.5 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
   },
-  steppersRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  streakText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#000000',
+    marginLeft: 4,
   },
-  stepBtn: {
-    width: 28,
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  progressBarBg: {
-    height: 8,
-    width: '100%',
-    marginTop: 12,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-  },
-  currencySelectorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    gap: 6,
-  },
-  financeMetricsRow: {
+  goalHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  percentBadge: {
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  percentText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#000000',
+  },
+  progressTrack: {
+    height: 12,
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 6,
+    backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
+    marginVertical: 10,
+  },
+  progressFill: {
+    height: '100%',
+  },
+  stepperRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  stepBtn: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 6,
+    paddingVertical: 6,
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  stepBtnText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  currencyRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 12,
+  },
+  currChip: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 6,
+    paddingVertical: 6,
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  currChipText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  cashboxGrid: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  cashboxCol: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+  },
+  cashboxLbl: {
+    fontFamily: 'SpaceMono',
+    fontSize: 8,
+    fontWeight: '700',
+    color: '#000000',
+    letterSpacing: 0.5,
+  },
+  cashboxVal: {
+    fontFamily: 'SpaceMono',
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#000000',
+    marginTop: 2,
+  },
+  subSectionTitleRow: {
+    marginVertical: 10,
+  },
+  subSectionTitle: {
+    fontFamily: 'SpaceMono',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  txCard: {
+    marginBottom: 8,
   },
   txRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
-    marginBottom: 8,
+    justifyContent: 'space-between',
   },
-  vaultHeader: {
+  txAmount: {
+    fontFamily: 'SpaceMono',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  noteTagBadge: {
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFE500',
+    marginTop: 8,
+  },
+  noteTagText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  otaHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  wifiStatusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    gap: 4,
   },
-  licenseInput: {
-    height: 44,
-    borderWidth: 1,
+  wifiStatusText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  updateAvailableBox: {
+    borderWidth: 2,
+    borderColor: '#000000',
+    backgroundColor: '#FFE500',
+    borderRadius: 6,
+    padding: 10,
+    gap: 8,
+  },
+  updateAvailableText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#000000',
+    lineHeight: 16,
+  },
+  licRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  licBadge: {
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  licBadgeText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  licInput: {
+    borderWidth: 2,
+    borderRadius: 6,
     paddingHorizontal: 12,
-    fontSize: 14,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    paddingVertical: 8,
+    fontFamily: 'SpaceMono',
+    fontSize: 12,
+    marginBottom: 10,
   },
   fab: {
     position: 'absolute',

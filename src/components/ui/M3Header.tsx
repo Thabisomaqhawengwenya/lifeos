@@ -23,7 +23,7 @@ export function M3Header({
   onBack,
 }: M3HeaderProps) {
   const insets = useSafeAreaInsets();
-  const { colors, spacing, typography, radii } = useAppTheme();
+  const { colors, spacing, isDark } = useAppTheme();
 
   return (
     <View
@@ -31,9 +31,11 @@ export function M3Header({
         styles.container,
         {
           paddingTop: Math.max(insets.top, spacing.md) + spacing.xs,
-          paddingHorizontal: spacing.lg,
+          paddingHorizontal: spacing.base,
           paddingBottom: spacing.md,
           backgroundColor: colors.background,
+          borderBottomWidth: 2.5,
+          borderBottomColor: colors.border,
         },
       ]}
     >
@@ -44,21 +46,12 @@ export function M3Header({
               style={[
                 styles.badge,
                 {
-                  backgroundColor: colors.primaryContainer,
-                  borderRadius: radii.full,
-                  paddingHorizontal: spacing.sm + 2,
-                  paddingVertical: spacing.xxs,
+                  backgroundColor: colors.accentYellow,
+                  borderColor: colors.border,
                 },
               ]}
             >
-              <Text
-                style={[
-                  typography.labelSmall,
-                  { color: colors.onPrimaryContainer, fontWeight: '700' },
-                ]}
-              >
-                {badge.toUpperCase()}
-              </Text>
+              <Text style={styles.badgeText}>{badge.toUpperCase()}</Text>
             </View>
           )}
           <View style={styles.headingRow}>
@@ -68,19 +61,39 @@ export function M3Header({
                   haptic.light();
                   onBack?.();
                 }}
-                style={styles.backButton}
+                style={[
+                  styles.backButton,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    shadowColor: isDark ? '#FFFFFF' : '#000000',
+                  },
+                ]}
                 accessibilityRole="button"
                 accessibilityLabel="Go back"
               >
-                <Ionicons name="arrow-back" size={24} color={colors.onBackground} />
+                <Ionicons name="arrow-back" size={20} color={colors.onBackground} />
               </Pressable>
             )}
-            <Text style={[typography.headlineLarge, { color: colors.onBackground }]}>
+            <Text
+              style={[
+                styles.title,
+                {
+                  color: colors.onBackground,
+                  fontFamily: 'SpaceMono',
+                },
+              ]}
+            >
               {title}
             </Text>
           </View>
           {subtitle && (
-            <Text style={[typography.bodyMedium, { color: colors.onSurfaceVariant, marginTop: 2 }]}>
+            <Text
+              style={[
+                styles.subtitle,
+                { color: isDark ? '#A0A0A0' : '#444444' },
+              ]}
+            >
               {subtitle}
             </Text>
           )}
@@ -108,15 +121,48 @@ const styles = StyleSheet.create({
   headingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 2,
   },
   backButton: {
     marginRight: 10,
-    padding: 4,
+    padding: 6,
+    borderWidth: 2,
+    borderRadius: 6,
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
   },
   badge: {
     alignSelf: 'flex-start',
     marginBottom: 4,
+    borderWidth: 2,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  badgeText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#000000',
+    letterSpacing: 0.8,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+    letterSpacing: 0.2,
   },
   rightActionContainer: {
     flexDirection: 'row',

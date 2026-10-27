@@ -4,8 +4,10 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { StatusBar } from 'expo-status-bar';
+import { Ionicons, Feather } from '@expo/vector-icons';
 
 import { ThemeProvider as AppThemeProvider, useAppTheme } from '@/src/design-system/ThemeContext';
+import { UpdateBanner } from '@/src/components/ui/UpdateBanner';
 
 export {
   ErrorBoundary,
@@ -20,6 +22,8 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    ...Ionicons.font,
+    ...Feather.font,
   });
 
   useEffect(() => {
@@ -73,6 +77,7 @@ function RootLayoutNav() {
   return (
     <NavigationThemeProvider value={navigationTheme}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
+      <UpdateBanner />
       <Stack
         screenOptions={{
           headerShown: false,

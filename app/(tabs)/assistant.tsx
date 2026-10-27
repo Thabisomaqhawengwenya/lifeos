@@ -19,13 +19,13 @@ import { haptic } from '@/src/design-system/haptics';
 import { AIAssistantService, ProposedAIAction, AssistantMessage } from '@/src/services/AIAssistantService';
 
 export default function AssistantScreen() {
-  const { colors, spacing, radii, typography } = useAppTheme();
+  const { colors, spacing, isDark } = useAppTheme();
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState<AssistantMessage[]>([
     {
       id: 'msg-init',
       sender: 'assistant',
-      text: 'Hello Mr Q! I am your LifeOS workspace assistant. Ask me to schedule tasks, track habits, log expenses, or organize your day.',
+      text: 'Hello Mr Q! I am your LifeOS offline workspace assistant. Command me to schedule tasks, track habit routines, log expenses, or organize your day.',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -35,8 +35,8 @@ export default function AssistantScreen() {
     'Remind me to call accountant tomorrow at 9 AM',
     'Spent $45 on groceries',
     'Urgent task: review database index',
-    'Track habit: Morning Run',
-    'Note: LifeOS architecture decisions',
+    'Track habit: Morning Deep Work',
+    'Note: LifeOS Neo-Brutalism architecture',
   ];
 
   const handleSend = () => {
@@ -81,19 +81,21 @@ export default function AssistantScreen() {
     setActiveAction(null);
   };
 
+  const shadowColor = isDark ? '#FFFFFF' : '#000000';
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <M3Header
-        badge="Autonomous Life Intelligence"
+        badge="NEO-BRUTALIST • AI COMPANION"
         title="AI Assistant"
-        subtitle="Safe, grounded natural-language workspace partner"
+        subtitle="Safe, offline heuristic natural-language partner"
       />
 
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.lg }]}
+        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.base }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Chat Stream */}
@@ -108,30 +110,27 @@ export default function AssistantScreen() {
             {msg.sender === 'assistant' && (
               <View
                 style={[
-                  styles.avatarCircle,
-                  { backgroundColor: colors.primaryContainer, borderRadius: radii.full },
+                  styles.avatarBox,
+                  { backgroundColor: colors.accentYellow, borderColor: colors.border },
                 ]}
               >
-                <Ionicons name="sparkles" size={14} color={colors.onPrimaryContainer} />
+                <Ionicons name="sparkles" size={14} color="#000000" />
               </View>
             )}
             <View
               style={[
                 styles.bubble,
                 {
-                  backgroundColor: msg.sender === 'user' ? colors.primary : colors.surfaceVariant,
-                  borderRadius: radii.xl,
+                  backgroundColor: msg.sender === 'user' ? colors.accentYellow : colors.surface,
+                  borderColor: colors.border,
+                  shadowColor,
                 },
               ]}
             >
-              <Text
-                style={[
-                  typography.bodyMedium,
-                  { color: msg.sender === 'user' ? colors.onPrimary : colors.onSurface },
-                ]}
-              >
+              <Text style={styles.bubbleText}>
                 {msg.text}
               </Text>
+              <Text style={styles.timestampText}>{msg.timestamp}</Text>
             </View>
           </View>
         ))}
@@ -139,12 +138,11 @@ export default function AssistantScreen() {
         {/* Action Safety Preview Card */}
         {activeAction && (
           <M3Card
-            variant="elevated"
+            variant="lilac"
             style={[
               styles.actionCard,
               {
-                borderColor: activeAction.status === 'applied' ? colors.success : colors.outlineVariant,
-                borderWidth: 1,
+                borderColor: activeAction.status === 'applied' ? colors.accentJade : colors.border,
               },
             ]}
           >
@@ -155,122 +153,99 @@ export default function AssistantScreen() {
                   {
                     backgroundColor:
                       activeAction.status === 'applied'
-                        ? colors.successContainer
-                        : colors.primaryContainer,
-                    borderRadius: radii.full,
+                        ? colors.accentJade
+                        : colors.accentYellow,
                   },
                 ]}
               >
                 <Ionicons
                   name={activeAction.status === 'applied' ? 'checkmark-circle' : 'shield-checkmark'}
                   size={14}
-                  color={
-                    activeAction.status === 'applied'
-                      ? colors.onSuccessContainer
-                      : colors.onPrimaryContainer
-                  }
+                  color="#000000"
                 />
-                <Text
-                  style={[
-                    typography.labelSmall,
-                    {
-                      color:
-                        activeAction.status === 'applied'
-                          ? colors.onSuccessContainer
-                          : colors.onPrimaryContainer,
-                      marginLeft: 4,
-                      fontWeight: '700',
-                    },
-                  ]}
-                >
+                <Text style={styles.actionBadgeText}>
                   {activeAction.status === 'applied' ? 'SAVED TO SQLITE' : 'PROPOSED ACTION'}
                 </Text>
               </View>
             </View>
 
-            <Text style={[typography.titleMedium, { color: colors.onSurface, marginTop: 8 }]}>
+            <Text style={styles.actionTitle}>
               {activeAction.title}
             </Text>
-            <Text style={[typography.bodySmall, { color: colors.onSurfaceVariant, marginTop: 4 }]}>
+            <Text style={styles.actionDetails}>
               {activeAction.details}
             </Text>
 
             {activeAction.status === 'pending' ? (
               <View style={styles.actionButtonsRow}>
                 <M3Button
-                  title="Confirm & Apply"
+                  title="CONFIRM & APPLY"
+                  onPress={handleConfirmAction}
                   variant="filled"
                   size="small"
-                  onPress={handleConfirmAction}
-                  style={{ flex: 1, marginRight: 8 }}
+                  style={{ flex: 1 }}
                 />
                 <M3Button
-                  title="Dismiss"
-                  variant="outlined"
-                  size="small"
+                  title="CANCEL"
                   onPress={handleCancelAction}
+                  variant="tonal"
+                  size="small"
                   style={{ flex: 1 }}
                 />
               </View>
             ) : (
-              <Text
-                style={[
-                  typography.labelSmall,
-                  { color: colors.success, marginTop: 10, fontWeight: '600' },
-                ]}
-              >
-                ✓ Persisted to device database
-              </Text>
+              <View style={styles.appliedBanner}>
+                <Ionicons name="checkmark-done" size={16} color="#000000" />
+                <Text style={styles.appliedBannerText}>ACTION COMMITTED TO LOCAL DATABASE</Text>
+              </View>
             )}
           </M3Card>
         )}
 
         {/* Quick Suggestion Chips */}
-        <Text style={[typography.labelMedium, { color: colors.onSurfaceVariant, marginTop: 16, marginBottom: 8 }]}>
-          SUGGESTIONS
-        </Text>
-        <View style={styles.chipsWrap}>
-          {promptSuggestions.map((prompt, index) => (
-            <M3Chip
-              key={index}
-              label={prompt}
-              selected={false}
-              onPress={() => {
-                setInputText(prompt);
-                haptic.selection();
-              }}
-            />
-          ))}
+        <View style={styles.suggestionsContainer}>
+          <Text style={styles.suggestionTitle}>
+            EXAMPLE COMMANDS:
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestionScroll}>
+            {promptSuggestions.map((prompt, idx) => (
+              <M3Chip
+                key={idx}
+                label={prompt}
+                onPress={() => {
+                  haptic.selection();
+                  setInputText(prompt);
+                }}
+                colorScheme="yellow"
+              />
+            ))}
+          </ScrollView>
         </View>
 
-        <View style={{ height: 120 }} />
+        <View style={{ height: 90 }} />
       </ScrollView>
 
-      {/* Input Bar */}
+      {/* Input Box Bar */}
       <View
         style={[
           styles.inputContainer,
           {
             backgroundColor: colors.surface,
-            borderTopColor: colors.divider,
-            borderTopWidth: 1,
-            paddingHorizontal: spacing.lg,
-            paddingVertical: spacing.sm,
+            borderTopColor: colors.border,
           },
         ]}
       >
         <TextInput
           value={inputText}
           onChangeText={setInputText}
-          placeholder="Type a task, expense, note or question..."
-          placeholderTextColor={colors.outline}
+          placeholder="Command LifeOS..."
+          placeholderTextColor="#888888"
           style={[
             styles.textInput,
             {
-              backgroundColor: colors.surfaceVariant,
-              color: colors.onSurface,
-              borderRadius: radii.full,
-              paddingHorizontal: spacing.lg,
+              backgroundColor: colors.background,
+              borderColor: colors.border,
+              color: colors.onBackground,
             },
           ]}
           onSubmitEditing={handleSend}
@@ -280,14 +255,15 @@ export default function AssistantScreen() {
           style={[
             styles.sendButton,
             {
-              backgroundColor: colors.primary,
-              borderRadius: radii.full,
+              backgroundColor: colors.accentYellow,
+              borderColor: colors.border,
+              shadowColor,
             },
           ]}
           accessibilityRole="button"
-          accessibilityLabel="Send request to AI"
+          accessibilityLabel="Send command"
         >
-          <Ionicons name="arrow-up" size={20} color={colors.onPrimary} />
+          <Ionicons name="arrow-up" size={20} color="#000000" />
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -299,12 +275,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 8,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
   messageRow: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
     marginBottom: 12,
-    alignItems: 'flex-end',
   },
   userRow: {
     justifyContent: 'flex-end',
@@ -312,55 +289,141 @@ const styles = StyleSheet.create({
   assistantRow: {
     justifyContent: 'flex-start',
   },
-  avatarCircle: {
-    width: 26,
-    height: 26,
+  avatarBox: {
+    width: 28,
+    height: 28,
+    borderWidth: 2,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
-    marginBottom: 4,
+    marginTop: 2,
   },
   bubble: {
     maxWidth: '82%',
     paddingHorizontal: 14,
     paddingVertical: 10,
+    borderWidth: 2,
+    borderRadius: 8,
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  bubbleText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#000000',
+    lineHeight: 18,
+  },
+  timestampText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 9,
+    color: '#555555',
+    marginTop: 4,
+    alignSelf: 'flex-end',
   },
   actionCard: {
-    padding: 16,
     marginVertical: 12,
   },
   actionHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   actionBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    borderRadius: 4,
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 2,
+    gap: 4,
+  },
+  actionBadgeText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  actionTitle: {
+    fontFamily: 'SpaceMono',
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#000000',
+    marginTop: 8,
+  },
+  actionDetails: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#222222',
+    marginTop: 4,
+    lineHeight: 16,
   },
   actionButtonsRow: {
     flexDirection: 'row',
-    marginTop: 14,
+    gap: 8,
+    marginTop: 12,
   },
-  chipsWrap: {
+  appliedBanner: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
+    backgroundColor: '#70E4BA',
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    borderRadius: 4,
+    padding: 8,
+    marginTop: 12,
+    gap: 6,
+  },
+  appliedBannerText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  suggestionsContainer: {
+    marginTop: 16,
+  },
+  suggestionTitle: {
+    fontFamily: 'SpaceMono',
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#000000',
+    marginBottom: 8,
+  },
+  suggestionScroll: {
     gap: 8,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 2.5,
   },
   textInput: {
     flex: 1,
-    height: 44,
-    fontSize: 14,
-    marginRight: 10,
+    height: 48,
+    borderWidth: 2,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    fontFamily: 'SpaceMono',
+    fontSize: 13,
   },
   sendButton: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
+    borderWidth: 2,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    marginLeft: 10,
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
 });

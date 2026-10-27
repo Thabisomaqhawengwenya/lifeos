@@ -24,7 +24,7 @@ import { NotificationService } from '@/src/services/NotificationService';
 type CaptureType = 'task' | 'note' | 'reminder' | 'expense';
 
 export default function QuickCaptureModal() {
-  const { colors, spacing, radii, typography } = useAppTheme();
+  const { colors, spacing, isDark } = useAppTheme();
   const [captureType, setCaptureType] = useState<CaptureType>('task');
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
@@ -58,7 +58,6 @@ export default function QuickCaptureModal() {
           description: title.trim(),
         });
       } else if (captureType === 'reminder') {
-        // Schedule reminder 1 hour from now
         const trigger = new Date(Date.now() + 60 * 60 * 1000);
         await NotificationService.scheduleReminder({
           title: title.trim(),
@@ -82,62 +81,75 @@ export default function QuickCaptureModal() {
     }
   };
 
+  const shadowColor = isDark ? '#FFFFFF' : '#000000';
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       {/* Header Bar */}
-      <View style={[styles.header, { borderBottomColor: colors.divider }]}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <View style={styles.headerLeft}>
-          <Text style={[typography.titleLarge, { color: colors.onBackground }]}>
-            Quick Capture
+          <Text style={[styles.headerTitle, { color: colors.onBackground }]}>
+            QUICK CAPTURE
           </Text>
-          <Text style={[typography.bodySmall, { color: colors.onSurfaceVariant }]}>
+          <Text style={[styles.headerSub, { color: isDark ? '#A0A0A0' : '#555555' }]}>
             Direct persistence to local SQLite
           </Text>
         </View>
         <Pressable
           onPress={() => router.back()}
-          style={[styles.closeButton, { backgroundColor: colors.surfaceVariant, borderRadius: radii.full }]}
+          style={[
+            styles.closeButton,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              shadowColor,
+            },
+          ]}
           accessibilityRole="button"
           accessibilityLabel="Close"
         >
-          <Ionicons name="close" size={20} color={colors.onSurface} />
+          <Ionicons name="close" size={20} color={colors.onBackground} />
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.content, { padding: spacing.lg }]}>
-        {/* Type Selector */}
+      <ScrollView contentContainerStyle={[styles.content, { padding: spacing.base }]}>
+        {/* Type Selector Chips */}
         <View style={styles.typesRow}>
           <M3Chip
-            label="Task"
+            label="TASK"
             selected={captureType === 'task'}
             onPress={() => setCaptureType('task')}
-            icon={<Ionicons name="checkbox-outline" size={14} color={captureType === 'task' ? colors.onPrimary : colors.primary} />}
+            colorScheme="yellow"
+            icon={<Ionicons name="checkbox-outline" size={14} color="#000000" />}
           />
           <M3Chip
-            label="Note"
+            label="NOTE"
             selected={captureType === 'note'}
             onPress={() => setCaptureType('note')}
-            icon={<Ionicons name="document-text-outline" size={14} color={captureType === 'note' ? colors.onPrimary : colors.primary} />}
+            colorScheme="sky"
+            icon={<Ionicons name="document-text-outline" size={14} color="#000000" />}
           />
           <M3Chip
-            label="Reminder"
+            label="REMINDER"
             selected={captureType === 'reminder'}
             onPress={() => setCaptureType('reminder')}
-            icon={<Ionicons name="alarm-outline" size={14} color={captureType === 'reminder' ? colors.onPrimary : colors.primary} />}
+            colorScheme="coral"
+            icon={<Ionicons name="alarm-outline" size={14} color="#000000" />}
           />
           <M3Chip
-            label="Expense"
+            label="EXPENSE"
             selected={captureType === 'expense'}
             onPress={() => setCaptureType('expense')}
-            icon={<Ionicons name="cash-outline" size={14} color={captureType === 'expense' ? colors.onPrimary : colors.primary} />}
+            colorScheme="mint"
+            icon={<Ionicons name="cash-outline" size={14} color="#000000" />}
           />
         </View>
 
         {/* Title Input */}
-        <Text style={[typography.labelMedium, { color: colors.onSurfaceVariant, marginTop: 16, marginBottom: 6 }]}>
+        <Text style={[styles.inputLabel, { color: colors.onBackground }]}>
           {captureType === 'task'
             ? 'TASK TITLE'
             : captureType === 'note'
@@ -151,21 +163,20 @@ export default function QuickCaptureModal() {
           onChangeText={setTitle}
           placeholder={
             captureType === 'task'
-              ? 'e.g. Implement SQLite database schema'
+              ? 'e.g. Neo-Brutalism UI Polish'
               : captureType === 'note'
-              ? 'e.g. LifeOS architecture ideas'
+              ? 'e.g. LifeOS System Architecture'
               : captureType === 'reminder'
               ? 'e.g. Check server backups'
               : 'e.g. Coffee & sandwich'
           }
-          placeholderTextColor={colors.outline}
+          placeholderTextColor="#888888"
           style={[
             styles.input,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.outlineVariant,
+              borderColor: colors.border,
               color: colors.onSurface,
-              borderRadius: radii.md,
             },
           ]}
           autoFocus
@@ -174,22 +185,21 @@ export default function QuickCaptureModal() {
         {/* Amount field for Expense */}
         {captureType === 'expense' && (
           <>
-            <Text style={[typography.labelMedium, { color: colors.onSurfaceVariant, marginTop: 14, marginBottom: 6 }]}>
+            <Text style={[styles.inputLabel, { color: colors.onBackground }]}>
               AMOUNT ($)
             </Text>
             <TextInput
               value={amount}
               onChangeText={setAmount}
               placeholder="0.00"
-              placeholderTextColor={colors.outline}
+              placeholderTextColor="#888888"
               keyboardType="decimal-pad"
               style={[
                 styles.input,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.outlineVariant,
+                  borderColor: colors.border,
                   color: colors.onSurface,
-                  borderRadius: radii.md,
                 },
               ]}
             />
@@ -199,60 +209,81 @@ export default function QuickCaptureModal() {
         {/* Priority field for Task */}
         {captureType === 'task' && (
           <>
-            <Text style={[typography.labelMedium, { color: colors.onSurfaceVariant, marginTop: 14, marginBottom: 6 }]}>
+            <Text style={[styles.inputLabel, { color: colors.onBackground }]}>
               PRIORITY LEVEL
             </Text>
             <View style={styles.priorityRow}>
-              <M3Chip
-                label="Low"
-                selected={priority === 'low'}
-                onPress={() => setPriority('low')}
-              />
-              <M3Chip
-                label="Medium"
-                selected={priority === 'medium'}
-                onPress={() => setPriority('medium')}
-              />
-              <M3Chip
-                label="High"
-                selected={priority === 'high'}
-                onPress={() => setPriority('high')}
-              />
+              {(['low', 'medium', 'high'] as const).map((p) => (
+                <Pressable
+                  key={p}
+                  onPress={() => setPriority(p)}
+                  style={[
+                    styles.priorityBtn,
+                    {
+                      backgroundColor:
+                        priority === p
+                          ? p === 'high'
+                            ? colors.accentRed
+                            : p === 'medium'
+                            ? colors.accentYellow
+                            : colors.accentSky
+                          : colors.surface,
+                      borderColor: colors.border,
+                    },
+                    priority === p && {
+                      shadowColor,
+                      shadowOffset: { width: 2, height: 2 },
+                      shadowOpacity: 1,
+                      shadowRadius: 0,
+                      elevation: 2,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.priorityBtnText,
+                      {
+                        color: priority === p && p === 'high' ? '#FFFFFF' : '#000000',
+                      },
+                    ]}
+                  >
+                    {p.toUpperCase()}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
           </>
         )}
 
-        {/* Notes Input */}
-        <Text style={[typography.labelMedium, { color: colors.onSurfaceVariant, marginTop: 14, marginBottom: 6 }]}>
-          DESCRIPTION / CONTEXT
+        {/* Description / Notes field */}
+        <Text style={[styles.inputLabel, { color: colors.onBackground }]}>
+          ADDITIONAL NOTES / CONTEXT
         </Text>
         <TextInput
           value={notes}
           onChangeText={setNotes}
-          placeholder="Add any relevant details, links or tags..."
-          placeholderTextColor={colors.outline}
+          placeholder="Optional notes or checklist details..."
+          placeholderTextColor="#888888"
           multiline
-          numberOfLines={4}
+          numberOfLines={3}
           style={[
             styles.textArea,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.outlineVariant,
+              borderColor: colors.border,
               color: colors.onSurface,
-              borderRadius: radii.md,
             },
           ]}
         />
 
-        {/* Save Button */}
-        <View style={styles.submitContainer}>
+        <View style={{ marginTop: 24 }}>
           <M3Button
-            title={isSubmitting ? 'Saving to Database...' : 'Save to LifeOS'}
+            title={isSubmitting ? 'SAVING...' : 'SAVE TO SQLITE'}
             onPress={handleSave}
             variant="filled"
             size="large"
-            disabled={!title.trim() || isSubmitting}
             loading={isSubmitting}
+            icon={<Ionicons name="checkmark-circle" size={20} color="#000000" />}
           />
         </View>
       </ScrollView>
@@ -268,18 +299,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 20 : 16,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
+    paddingHorizontal: 16,
+    paddingTop: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 2.5,
   },
   headerLeft: {
     flex: 1,
   },
+  headerTitle: {
+    fontFamily: 'SpaceMono',
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  headerSub: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 2,
+  },
   closeButton: {
-    padding: 8,
+    width: 36,
+    height: 36,
+    borderWidth: 2,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
   },
   content: {
     paddingBottom: 40,
@@ -288,26 +336,48 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontFamily: 'SpaceMono',
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 16,
+    marginBottom: 6,
+    letterSpacing: 0.5,
   },
   input: {
     height: 48,
-    borderWidth: 1,
+    borderWidth: 2,
+    borderRadius: 8,
     paddingHorizontal: 14,
-    fontSize: 15,
-  },
-  textArea: {
-    minHeight: 90,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    textAlignVertical: 'top',
+    fontFamily: 'SpaceMono',
+    fontSize: 13,
   },
   priorityRow: {
     flexDirection: 'row',
     gap: 8,
   },
-  submitContainer: {
-    marginTop: 28,
+  priorityBtn: {
+    flex: 1,
+    borderWidth: 2,
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  priorityBtnText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  textArea: {
+    minHeight: 80,
+    borderWidth: 2,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    fontFamily: 'SpaceMono',
+    fontSize: 13,
+    textAlignVertical: 'top',
   },
 });

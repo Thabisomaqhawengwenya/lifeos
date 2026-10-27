@@ -19,36 +19,39 @@ export function M3EmptyState({
   actionTitle,
   onAction,
 }: M3EmptyStateProps) {
-  const { colors, spacing, typography, radii } = useAppTheme();
+  const { colors, spacing, isDark } = useAppTheme();
 
   return (
-    <View style={[styles.container, { padding: spacing.xxl }]}>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          shadowColor: isDark ? '#FFFFFF' : '#000000',
+        },
+      ]}
+    >
       <View
         style={[
-          styles.iconCircle,
+          styles.iconBox,
           {
-            backgroundColor: colors.surfaceVariant,
-            borderRadius: radii.full,
-            width: 72,
-            height: 72,
-            marginBottom: spacing.md,
+            backgroundColor: colors.accentYellow,
+            borderColor: colors.border,
           },
         ]}
       >
-        <Ionicons name={icon} size={34} color={colors.primary} />
+        <Ionicons name={icon} size={30} color="#000000" />
       </View>
-      <Text style={[typography.titleLarge, { color: colors.onSurface, textAlign: 'center' }]}>
+      <Text style={[styles.title, { color: colors.onSurface }]}>
         {title}
       </Text>
       <Text
         style={[
-          typography.bodyMedium,
+          styles.description,
           {
-            color: colors.onSurfaceVariant,
-            textAlign: 'center',
-            marginTop: spacing.xs,
-            marginBottom: actionTitle ? spacing.lg : 0,
-            maxWidth: 280,
+            color: isDark ? '#B0B0B0' : '#444444',
+            marginBottom: actionTitle ? spacing.base : 0,
           },
         ]}
       >
@@ -58,7 +61,7 @@ export function M3EmptyState({
         <M3Button
           title={actionTitle}
           onPress={onAction}
-          variant="tonal"
+          variant="filled"
           size="small"
         />
       )}
@@ -67,12 +70,45 @@ export function M3EmptyState({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  card: {
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2.5,
+    borderRadius: 12,
+    padding: 24,
+    marginVertical: 16,
+    marginHorizontal: 4,
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
   },
-  iconCircle: {
+  iconBox: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 12,
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  title: {
+    fontFamily: 'SpaceMono',
+    fontSize: 15,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  description: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+    maxWidth: 280,
+    lineHeight: 18,
   },
 });

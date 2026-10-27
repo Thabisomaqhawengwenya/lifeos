@@ -20,7 +20,7 @@ import { TaskDetailModal } from '@/src/components/tasks/TaskDetailModal';
 import { GlobalSearchModal } from '@/src/components/search/GlobalSearchModal';
 
 export default function HomeScreen() {
-  const { colors, spacing, radii, typography, isDark, mode, setThemeMode } = useAppTheme();
+  const { colors, spacing, isDark, mode, setThemeMode } = useAppTheme();
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [habits, setHabits] = useState<HabitItem[]>([]);
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
@@ -29,7 +29,7 @@ export default function HomeScreen() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const todayFormatted = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
+    weekday: 'short',
     month: 'short',
     day: 'numeric',
   });
@@ -87,33 +87,39 @@ export default function HomeScreen() {
 
   const completedCount = tasks.filter((t) => t.is_completed).length;
   const bestStreak = habits.reduce((max, h) => Math.max(max, h.streak_current), 0);
+  const shadowColor = isDark ? '#FFFFFF' : '#000000';
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <M3Header
-        badge="LifeOS • Local SQLite"
+        badge="NEO-BRUTALISM • V1.1.0"
         title={`${greeting}, Mr Q`}
-        subtitle={todayFormatted}
+        subtitle={`${todayFormatted} • Local SQLite Active`}
         rightAction={
           <View style={styles.headerActions}>
             <Pressable
               onPress={() => setSearchVisible(true)}
               style={[
                 styles.iconButton,
-                { backgroundColor: colors.surfaceVariant, borderRadius: radii.full, marginRight: 8 },
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  shadowColor,
+                },
               ]}
               accessibilityRole="button"
               accessibilityLabel="Global search"
             >
-              <Ionicons name="search" size={18} color={colors.onSurface} />
+              <Ionicons name="search" size={18} color={colors.onBackground} />
             </Pressable>
             <Pressable
               onPress={toggleTheme}
               style={[
                 styles.iconButton,
                 {
-                  backgroundColor: colors.surfaceVariant,
-                  borderRadius: radii.full,
+                  backgroundColor: colors.accentYellow,
+                  borderColor: colors.border,
+                  shadowColor,
                 },
               ]}
               accessibilityRole="button"
@@ -122,7 +128,7 @@ export default function HomeScreen() {
               <Ionicons
                 name={isDark ? 'moon' : 'sunny'}
                 size={18}
-                color={colors.primary}
+                color="#000000"
               />
             </Pressable>
           </View>
@@ -130,103 +136,82 @@ export default function HomeScreen() {
       />
 
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.lg }]}
+        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.base }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Daily Focus Hero Card */}
+        {/* Daily Focus Hero Card (Neo-Brutalist Layout) */}
         <M3Card variant="elevated" style={styles.heroCard}>
           <View style={styles.heroHeader}>
             <View>
-              <Text style={[typography.labelMedium, { color: colors.primary }]}>
-                TODAY'S MOMENTUM
-              </Text>
-              <Text style={[typography.headlineMedium, { color: colors.onSurface, marginTop: 2 }]}>
-                Clear Mind, Focused Work
+              <View style={styles.eyebrowTag}>
+                <Text style={styles.eyebrowText}>DAILY MOMENTUM</Text>
+              </View>
+              <Text style={[styles.heroHeadline, { color: colors.onSurface }]}>
+                Execution Mode
               </Text>
             </View>
-            <View
-              style={[
-                styles.focusBadge,
-                {
-                  backgroundColor: colors.primaryContainer,
-                  borderRadius: radii.full,
-                },
-              ]}
-            >
-              <Ionicons name="sparkles" size={14} color={colors.onPrimaryContainer} />
-              <Text
-                style={[
-                  typography.labelSmall,
-                  { color: colors.onPrimaryContainer, marginLeft: 4, fontWeight: '700' },
-                ]}
-              >
-                LIVE
-              </Text>
+            <View style={styles.liveBadge}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveText}>SYNCED</Text>
             </View>
           </View>
 
-          {/* Quick Metrics Bar */}
-          <View style={[styles.metricsRow, { borderColor: colors.outlineVariant }]}>
-            <View style={styles.metricItem}>
-              <Text style={[typography.headlineLarge, { color: colors.primary }]}>
-                {completedCount} / {tasks.length}
+          {/* Quick Metrics Bar (3 Distinct Brutalist Blocks) */}
+          <View style={styles.metricsGrid}>
+            <View style={[styles.metricTile, { backgroundColor: colors.accentYellow }]}>
+              <Text style={styles.metricVal}>
+                {completedCount}/{tasks.length}
               </Text>
-              <Text style={[typography.labelSmall, { color: colors.onSurfaceVariant }]}>
-                Tasks Done
-              </Text>
+              <Text style={styles.metricLbl}>TASKS</Text>
             </View>
-            <View style={[styles.metricDivider, { backgroundColor: colors.outlineVariant }]} />
-            <View style={styles.metricItem}>
-              <Text style={[typography.headlineLarge, { color: colors.accentGold }]}>
+
+            <View style={[styles.metricTile, { backgroundColor: colors.accentCoral }]}>
+              <Text style={[styles.metricVal, { color: '#FFFFFF' }]}>
                 {bestStreak}d
               </Text>
-              <Text style={[typography.labelSmall, { color: colors.onSurfaceVariant }]}>
-                Active Streak
-              </Text>
+              <Text style={[styles.metricLbl, { color: '#FFFFFF' }]}>STREAK</Text>
             </View>
-            <View style={[styles.metricDivider, { backgroundColor: colors.outlineVariant }]} />
-            <View style={styles.metricItem}>
-              <Text style={[typography.headlineLarge, { color: colors.tertiary }]}>
-                {habits.filter((h) => h.is_logged_today).length} / {habits.length}
+
+            <View style={[styles.metricTile, { backgroundColor: colors.accentJade }]}>
+              <Text style={styles.metricVal}>
+                {habits.filter((h) => h.is_logged_today).length}/{habits.length}
               </Text>
-              <Text style={[typography.labelSmall, { color: colors.onSurfaceVariant }]}>
-                Habits Checked
+              <Text style={styles.metricLbl}>HABITS</Text>
+            </View>
+          </View>
+        </M3Card>
+
+        {/* AI Insight Card (Tuckii Lilac with Brutalist Border & Shadow) */}
+        <M3Card variant="lilac" style={styles.aiInsightCard}>
+          <View style={styles.aiInsightRow}>
+            <View style={styles.aiIconBox}>
+              <Ionicons name="sparkles" size={18} color="#000000" />
+            </View>
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <Text style={styles.aiTag}>OFFLINE AI INSIGHT</Text>
+              <Text style={styles.aiMessage}>
+                {tasks.filter((t) => !t.is_completed).length > 0
+                  ? `You have ${tasks.filter((t) => !t.is_completed).length} open deliverables. Stay locked in on high-priority items today.`
+                  : 'All deliverables are completed! Zero backlog maintained.'}
               </Text>
             </View>
           </View>
         </M3Card>
 
-        {/* AI Insight Pill */}
-        <M3Card
-          variant="filled"
-          style={[styles.aiInsightCard, { backgroundColor: colors.tertiaryContainer }]}
-        >
-          <View style={styles.aiInsightRow}>
-            <Ionicons name="bulb-outline" size={20} color={colors.onTertiaryContainer} />
-            <Text
-              style={[
-                typography.bodySmall,
-                { color: colors.onTertiaryContainer, flex: 1, marginLeft: spacing.sm },
-              ]}
-            >
-              <Text style={{ fontWeight: '700' }}>AI Assistant: </Text>
-              {tasks.filter((t) => !t.is_completed).length > 0
-                ? `You have ${tasks.filter((t) => !t.is_completed).length} open deliverables. Stay locked in on high-priority items.`
-                : 'All deliverables are completed! Great work maintaining zero backlog.'}
+        {/* Today's Priorities Section Header */}
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleRow}>
+            <View style={styles.sectionDot} />
+            <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>
+              TODAY'S PRIORITIES
             </Text>
           </View>
-        </M3Card>
-
-        {/* Today's Priorities Section */}
-        <View style={styles.sectionHeader}>
-          <Text style={[typography.titleLarge, { color: colors.onBackground }]}>
-            Today's Priorities
-          </Text>
           <Pressable
             onPress={() => router.push('/(tabs)/tasks')}
+            style={styles.viewAllBtn}
             accessibilityRole="button"
           >
-            <Text style={[typography.labelMedium, { color: colors.primary }]}>View all</Text>
+            <Text style={styles.viewAllText}>VIEW ALL →</Text>
           </Pressable>
         </View>
 
@@ -234,7 +219,7 @@ export default function HomeScreen() {
           <M3Card
             key={task.id}
             variant="elevated"
-            style={[styles.taskCard, task.is_completed && { opacity: 0.6 }]}
+            style={[styles.taskCard, task.is_completed && { opacity: 0.65 }]}
             onPress={() => setSelectedTask(task)}
           >
             <View style={styles.taskCardContent}>
@@ -243,22 +228,21 @@ export default function HomeScreen() {
                 style={[
                   styles.checkbox,
                   {
-                    borderColor: task.is_completed ? colors.primary : colors.outline,
-                    backgroundColor: task.is_completed ? colors.primary : 'transparent',
-                    borderRadius: radii.xs,
+                    borderColor: '#000000',
+                    backgroundColor: task.is_completed ? colors.accentYellow : colors.surface,
                   },
                 ]}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: task.is_completed }}
               >
                 {task.is_completed && (
-                  <Ionicons name="checkmark" size={16} color={colors.onPrimary} />
+                  <Ionicons name="checkmark" size={18} color="#000000" />
                 )}
               </Pressable>
               <View style={styles.taskTextContainer}>
                 <Text
                   style={[
-                    typography.titleMedium,
+                    styles.taskTitle,
                     {
                       color: colors.onSurface,
                       textDecorationLine: task.is_completed ? 'line-through' : 'none',
@@ -268,35 +252,55 @@ export default function HomeScreen() {
                   {task.title}
                 </Text>
                 <View style={styles.taskMetaRow}>
-                  <View
-                    style={[
-                      styles.tagBadge,
-                      { backgroundColor: colors.primaryContainer, borderRadius: radii.full },
-                    ]}
-                  >
-                    <Text style={[typography.labelSmall, { color: colors.onPrimaryContainer }]}>
-                      {task.category}
+                  <View style={styles.tagBadge}>
+                    <Text style={styles.tagBadgeText}>
+                      {task.category.toUpperCase()}
                     </Text>
                   </View>
-                  <Text style={[typography.labelSmall, { color: colors.error, marginLeft: 8 }]}>
-                    {task.priority.toUpperCase()}
-                  </Text>
+                  <View
+                    style={[
+                      styles.priorityBadge,
+                      {
+                        backgroundColor:
+                          task.priority === 'high'
+                            ? colors.accentRed
+                            : task.priority === 'medium'
+                            ? colors.accentYellow
+                            : colors.accentSky,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.priorityText,
+                        {
+                          color: task.priority === 'high' ? '#FFFFFF' : '#000000',
+                        },
+                      ]}
+                    >
+                      {task.priority.toUpperCase()}
+                    </Text>
+                  </View>
                 </View>
               </View>
             </View>
           </M3Card>
         ))}
 
-        {/* Habits Snapshot Section */}
+        {/* Daily Habits Check-in Section Header */}
         <View style={styles.sectionHeader}>
-          <Text style={[typography.titleLarge, { color: colors.onBackground }]}>
-            Daily Habit Check-in
-          </Text>
+          <View style={styles.sectionTitleRow}>
+            <View style={[styles.sectionDot, { backgroundColor: colors.accentJade }]} />
+            <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>
+              HABIT STREAKS
+            </Text>
+          </View>
           <Pressable
             onPress={() => router.push('/(tabs)/life')}
+            style={styles.viewAllBtn}
             accessibilityRole="button"
           >
-            <Text style={[typography.labelMedium, { color: colors.primary }]}>Manage</Text>
+            <Text style={styles.viewAllText}>MANAGE →</Text>
           </Pressable>
         </View>
 
@@ -308,11 +312,12 @@ export default function HomeScreen() {
               selected={Boolean(h.is_logged_today)}
               onPress={() => toggleHabit(h.id)}
               badge={`${h.streak_current}d`}
+              colorScheme="mint"
               icon={
                 <Ionicons
                   name={h.is_logged_today ? 'flame' : 'flame-outline'}
                   size={14}
-                  color={h.is_logged_today ? colors.onPrimary : colors.primary}
+                  color="#000000"
                 />
               }
             />
@@ -353,89 +358,255 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollContent: {
+    paddingTop: 16,
+    paddingBottom: 24,
+  },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   iconButton: {
-    padding: 8,
+    width: 38,
+    height: 38,
+    borderWidth: 2,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  scrollContent: {
-    paddingTop: 8,
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
   },
   heroCard: {
-    marginBottom: 14,
+    marginBottom: 16,
   },
   heroHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    marginBottom: 16,
   },
-  focusBadge: {
+  eyebrowTag: {
+    backgroundColor: '#FFE500',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    alignSelf: 'flex-start',
+    marginBottom: 6,
+  },
+  eyebrowText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#000000',
+    letterSpacing: 0.5,
+  },
+  heroHeadline: {
+    fontFamily: 'SpaceMono',
+    fontSize: 20,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 4,
+    gap: 4,
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
   },
-  metricsRow: {
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#00C853',
+  },
+  liveText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  metricsGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    borderTopWidth: 1,
-    marginTop: 18,
-    paddingTop: 14,
+    gap: 8,
   },
-  metricItem: {
+  metricTile: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
     alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
   },
-  metricDivider: {
-    width: 1,
-    height: 32,
+  metricVal: {
+    fontFamily: 'SpaceMono',
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#000000',
+  },
+  metricLbl: {
+    fontFamily: 'SpaceMono',
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#000000',
+    marginTop: 2,
+    letterSpacing: 0.5,
   },
   aiInsightCard: {
     marginBottom: 20,
-    padding: 12,
   },
   aiInsightRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  aiIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#FFE500',
+    borderWidth: 2,
+    borderColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+  },
+  aiTag: {
+    fontFamily: 'SpaceMono',
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#000000',
+    letterSpacing: 0.5,
+  },
+  aiMessage: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#000000',
+    marginTop: 2,
+    lineHeight: 16,
+  },
   sectionHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 8,
+    alignItems: 'center',
     marginBottom: 12,
+    marginTop: 6,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  sectionDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 2,
+    backgroundColor: '#FFE500',
+    borderWidth: 1.5,
+    borderColor: '#000000',
+  },
+  sectionTitle: {
+    fontFamily: 'SpaceMono',
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  viewAllBtn: {
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    backgroundColor: '#FFFFFF',
+  },
+  viewAllText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#000000',
   },
   taskCard: {
     marginBottom: 10,
-    padding: 14,
   },
   taskCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   checkbox: {
-    width: 22,
-    height: 22,
-    borderWidth: 2,
+    width: 26,
+    height: 26,
+    borderWidth: 2.5,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    shadowColor: '#000000',
+    shadowOffset: { width: 1.5, height: 1.5 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
   },
   taskTextContainer: {
     flex: 1,
   },
+  taskTitle: {
+    fontFamily: 'SpaceMono',
+    fontSize: 14,
+    fontWeight: '700',
+  },
   taskMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 6,
+    gap: 6,
   },
   tagBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  tagBadgeText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  priorityBadge: {
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  priorityText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 9,
+    fontWeight: '700',
   },
   chipsRow: {
     flexDirection: 'row',

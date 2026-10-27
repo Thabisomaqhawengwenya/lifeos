@@ -1,16 +1,19 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useMemo } from 'react';
 import { useColorScheme as useRNColorScheme } from 'react-native';
-import { LightColors, DarkColors, ThemeColors, Spacing, Radii, Typography } from './tokens';
+import { LightColors, DarkColors, AppColorScheme, Spacing, Radii, Typography, HardShadows } from './tokens';
 
 type ThemeMode = 'system' | 'light' | 'dark';
+
+export type ThemeColors = AppColorScheme;
 
 interface ThemeContextType {
   mode: ThemeMode;
   isDark: boolean;
-  colors: ThemeColors;
+  colors: AppColorScheme;
   spacing: typeof Spacing;
   radii: typeof Radii;
   typography: typeof Typography;
+  hardShadows: typeof HardShadows;
   setThemeMode: (mode: ThemeMode) => void;
 }
 
@@ -36,6 +39,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       spacing: Spacing,
       radii: Radii,
       typography: Typography,
+      hardShadows: HardShadows,
       setThemeMode: setMode,
     }),
     [mode, isDark, colors]

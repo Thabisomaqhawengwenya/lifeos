@@ -21,25 +21,24 @@ import { TaskDetailModal } from '@/src/components/tasks/TaskDetailModal';
 type ViewMode = 'day' | 'week';
 
 export default function PlannerScreen() {
-  const { colors, spacing, radii, typography } = useAppTheme();
+  const { colors, spacing, isDark } = useAppTheme();
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
 
   const daysOfWeek = [
-    { day: 'Mon', date: '26', isToday: false },
-    { day: 'Tue', date: '27', isToday: true },
-    { day: 'Wed', date: '28', isToday: false },
-    { day: 'Thu', date: '29', isToday: false },
-    { day: 'Fri', date: '30', isToday: false },
-    { day: 'Sat', date: '31', isToday: false },
-    { day: 'Sun', date: '01', isToday: false },
+    { day: 'MON', date: '26', isToday: false },
+    { day: 'TUE', date: '27', isToday: true },
+    { day: 'WED', date: '28', isToday: false },
+    { day: 'THU', date: '29', isToday: false },
+    { day: 'FRI', date: '30', isToday: false },
+    { day: 'SAT', date: '31', isToday: false },
+    { day: 'SUN', date: '01', isToday: false },
   ];
 
   const loadPlannerTasks = useCallback(async () => {
     try {
       const all = await TaskRepository.getAllTasks();
-      // Filter for items due today or all pending
       setTasks(all);
     } catch (err) {
       console.warn('Failed loading planner tasks:', err);
@@ -58,20 +57,23 @@ export default function PlannerScreen() {
     await loadPlannerTasks();
   };
 
+  const shadowColor = isDark ? '#FFFFFF' : '#000000';
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <M3Header
-        title="Schedule & Planner"
-        subtitle="Dynamic SQLite Timeline"
+        badge="TIMELINE • CALENDAR"
+        title="Schedule & Plan"
+        subtitle="Dynamic SQLite Timeline Engine"
         rightAction={
           <View style={styles.viewModeChips}>
             <M3Chip
-              label="Day"
+              label="DAY"
               selected={viewMode === 'day'}
               onPress={() => setViewMode('day')}
             />
             <M3Chip
-              label="Week"
+              label="WEEK"
               selected={viewMode === 'week'}
               onPress={() => setViewMode('week')}
             />
@@ -79,8 +81,8 @@ export default function PlannerScreen() {
         }
       />
 
-      {/* Week Day Selector Strip */}
-      <View style={[styles.weekStrip, { borderBottomColor: colors.outlineVariant }]}>
+      {/* Week Day Selector Strip (Brutalist Blocks) */}
+      <View style={[styles.weekStrip, { borderBottomColor: colors.border }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.weekStripScroll}>
           {daysOfWeek.map((item, idx) => (
             <Pressable
@@ -89,84 +91,80 @@ export default function PlannerScreen() {
               style={[
                 styles.dayButton,
                 {
-                  backgroundColor: item.isToday ? colors.primary : colors.surfaceVariant,
-                  borderRadius: radii.lg,
+                  backgroundColor: item.isToday ? colors.accentYellow : colors.surface,
+                  borderColor: colors.border,
+                  shadowColor,
                 },
               ]}
             >
-              <Text
-                style={[
-                  typography.labelSmall,
-                  { color: item.isToday ? colors.onPrimary : colors.onSurfaceVariant },
-                ]}
-              >
-                {item.day}
-              </Text>
-              <Text
-                style={[
-                  typography.titleMedium,
-                  {
-                    color: item.isToday ? colors.onPrimary : colors.onSurface,
-                    fontWeight: '700',
-                    marginTop: 2,
-                  },
-                ]}
-              >
-                {item.date}
-              </Text>
-              {item.isToday && (
-                <View
-                  style={[
-                    styles.activeDot,
-                    { backgroundColor: colors.accentGold, borderRadius: radii.full },
-                  ]}
-                />
-              )}
+              <Text style={styles.dayLabel}>{item.day}</Text>
+              <Text style={styles.dateNumber}>{item.date}</Text>
+              {item.isToday && <View style={styles.activeDot} />}
             </Pressable>
           ))}
         </ScrollView>
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.lg }]}
+        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.base }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[typography.titleLarge, { color: colors.onBackground, marginVertical: spacing.md }]}>
-          Today's Scheduled Timeline ({tasks.length})
-        </Text>
+        <View style={styles.timelineHeader}>
+          <View style={styles.sectionDot} />
+          <Text style={[styles.timelineTitle, { color: colors.onBackground }]}>
+            SCHEDULED DELIVERABLES ({tasks.length})
+          </Text>
+        </View>
 
         {tasks.length === 0 ? (
           <M3EmptyState
             icon="calendar-outline"
-            title="No Items Scheduled"
-            description="Your planner timeline is clear. Schedule high-priority work or capture a new task."
-            actionTitle="Add Schedule Item"
+            title="NO ITEMS SCHEDULED"
+            description="Your planner timeline is completely clear. Schedule tasks or create an item."
+            actionTitle="ADD SCHEDULE ITEM"
             onAction={() => router.push('/modal')}
           />
         ) : (
           tasks.map((task, index) => {
-            const timeSlot = index === 0 ? '09:00 AM' : index === 1 ? '01:30 PM' : index === 2 ? '04:00 PM' : 'Anytime';
-            const nodeColor =
-              task.priority === 'high'
-                ? colors.error
-                : task.priority === 'medium'
-                ? colors.primary
-                : colors.tertiary;
+            const timeSlot = index === 0 ? '09:00 AM' : index === 1 ? '01:30 PM' : index === 2 ? '04:00 PM' : 'ANYTIME';
 
             return (
               <View key={task.id} style={styles.timelineItem}>
                 <View style={styles.timeColumn}>
-                  <Text style={[typography.labelMedium, { color: colors.primary }]}>{timeSlot}</Text>
-                  <Text style={[typography.labelSmall, { color: colors.onSurfaceVariant }]}>
-                    {task.priority.toUpperCase()}
-                  </Text>
+                  <Text style={styles.timeSlot}>{timeSlot}</Text>
+                  <View
+                    style={[
+                      styles.priorityTag,
+                      {
+                        backgroundColor:
+                          task.priority === 'high'
+                            ? colors.accentRed
+                            : task.priority === 'medium'
+                            ? colors.accentYellow
+                            : colors.accentSky,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.priorityText,
+                        { color: task.priority === 'high' ? '#FFFFFF' : '#000000' },
+                      ]}
+                    >
+                      {task.priority.toUpperCase()}
+                    </Text>
+                  </View>
                 </View>
 
-                <View style={[styles.timelineNode, { borderColor: nodeColor }]} />
+                {/* Brutalist Timeline Node & Line */}
+                <View style={styles.lineTrack}>
+                  <View style={[styles.timelineNode, { borderColor: colors.border }]} />
+                  <View style={[styles.verticalLine, { backgroundColor: colors.border }]} />
+                </View>
 
                 <M3Card
                   variant="elevated"
-                  style={[styles.timelineCard, task.is_completed && { opacity: 0.6 }]}
+                  style={[styles.timelineCard, task.is_completed && { opacity: 0.65 }]}
                   onPress={() => setSelectedTask(task)}
                 >
                   <View style={styles.cardInnerRow}>
@@ -175,20 +173,19 @@ export default function PlannerScreen() {
                       style={[
                         styles.checkbox,
                         {
-                          borderColor: task.is_completed ? colors.primary : colors.outline,
-                          backgroundColor: task.is_completed ? colors.primary : 'transparent',
-                          borderRadius: radii.xs,
+                          borderColor: '#000000',
+                          backgroundColor: task.is_completed ? colors.accentYellow : colors.surface,
                         },
                       ]}
                     >
                       {task.is_completed && (
-                        <Ionicons name="checkmark" size={14} color={colors.onPrimary} />
+                        <Ionicons name="checkmark" size={16} color="#000000" />
                       )}
                     </Pressable>
                     <View style={{ flex: 1 }}>
                       <Text
                         style={[
-                          typography.titleMedium,
+                          styles.taskTitle,
                           {
                             color: colors.onSurface,
                             textDecorationLine: task.is_completed ? 'line-through' : 'none',
@@ -198,10 +195,21 @@ export default function PlannerScreen() {
                         {task.title}
                       </Text>
                       {task.description ? (
-                        <Text style={[typography.bodySmall, { color: colors.onSurfaceVariant, marginTop: 2 }]}>
+                        <Text
+                          style={[
+                            styles.taskDesc,
+                            { color: isDark ? '#A0A0A0' : '#555555' },
+                          ]}
+                          numberOfLines={2}
+                        >
                           {task.description}
                         </Text>
                       ) : null}
+                      <View style={styles.categoryBadge}>
+                        <Text style={styles.categoryText}>
+                          {task.category.toUpperCase()}
+                        </Text>
+                      </View>
                     </View>
                   </View>
                 </M3Card>
@@ -213,12 +221,13 @@ export default function PlannerScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
+      {/* Floating Action Button */}
       <M3FAB
         onPress={() => {
           haptic.medium();
           router.push('/modal');
         }}
-        icon="calendar-outline"
+        icon="add"
         style={styles.fab}
       />
 
@@ -242,8 +251,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   weekStrip: {
-    borderBottomWidth: 1,
-    paddingVertical: 10,
+    paddingVertical: 12,
+    borderBottomWidth: 2.5,
   },
   weekStripScroll: {
     paddingHorizontal: 16,
@@ -251,51 +260,150 @@ const styles = StyleSheet.create({
   },
   dayButton: {
     width: 52,
-    height: 64,
+    height: 68,
+    borderWidth: 2,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  dayLabel: {
+    fontFamily: 'SpaceMono',
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  dateNumber: {
+    fontFamily: 'SpaceMono',
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#000000',
+    marginTop: 2,
   },
   activeDot: {
-    width: 4,
-    height: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#000000',
     marginTop: 4,
   },
   scrollContent: {
-    paddingTop: 8,
+    paddingTop: 16,
+    paddingBottom: 24,
+  },
+  timelineHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 16,
+  },
+  sectionDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 2,
+    backgroundColor: '#FFE500',
+    borderWidth: 1.5,
+    borderColor: '#000000',
+  },
+  timelineTitle: {
+    fontFamily: 'SpaceMono',
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
   timelineItem: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 14,
+    marginBottom: 12,
   },
   timeColumn: {
-    width: 72,
-    paddingTop: 4,
+    width: 76,
+    paddingTop: 10,
+  },
+  timeSlot: {
+    fontFamily: 'SpaceMono',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  priorityTag: {
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+  },
+  priorityText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 8,
+    fontWeight: '700',
+  },
+  lineTrack: {
+    width: 20,
+    alignItems: 'center',
   },
   timelineNode: {
     width: 12,
     height: 12,
-    borderRadius: 6,
-    borderWidth: 3,
-    backgroundColor: '#fff',
-    marginRight: 10,
-    marginTop: 8,
+    borderRadius: 3,
+    backgroundColor: '#FFE500',
+    borderWidth: 2,
+    marginTop: 14,
+    zIndex: 2,
+  },
+  verticalLine: {
+    width: 2.5,
+    flex: 1,
+    marginTop: -2,
   },
   timelineCard: {
     flex: 1,
-    padding: 14,
+    marginLeft: 8,
   },
   cardInnerRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   checkbox: {
-    width: 20,
-    height: 20,
+    width: 24,
+    height: 24,
     borderWidth: 2,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
+    marginTop: 2,
+  },
+  taskTitle: {
+    fontFamily: 'SpaceMono',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  taskDesc: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 4,
+    lineHeight: 16,
+  },
+  categoryBadge: {
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFFFFF',
+    marginTop: 6,
+  },
+  categoryText: {
+    fontFamily: 'SpaceMono',
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#000000',
   },
   fab: {
     position: 'absolute',

@@ -29,11 +29,10 @@ export function NoteEditorModal({
   onClose,
   onSaved,
 }: NoteEditorModalProps) {
-  const { colors, spacing, radii, typography } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tags, setTags] = useState('');
-  const [isPinned, setIsPinned] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -41,12 +40,10 @@ export function NoteEditorModal({
       setTitle(note.title);
       setContent(note.content);
       setTags(note.tags || '');
-      setIsPinned(note.is_pinned);
     } else {
       setTitle('');
       setContent('');
       setTags('');
-      setIsPinned(false);
     }
   }, [note, visible]);
 
@@ -57,16 +54,12 @@ export function NoteEditorModal({
 
     const noteTitle = title.trim() || content.trim().slice(0, 30);
     if (note) {
-      // Delete & re-insert for update
       await NoteRepository.deleteNote(note.id);
       await NoteRepository.createNote({
         title: noteTitle,
         content: content.trim(),
         tags: tags.trim() || undefined,
       });
-      if (isPinned) {
-        // preserve pin
-      }
     } else {
       await NoteRepository.createNote({
         title: noteTitle,
@@ -82,87 +75,132 @@ export function NoteEditorModal({
 
   const handleDelete = async () => {
     if (note) {
-      haptic.warning();
+      haptic.heavy();
       await NoteRepository.deleteNote(note.id);
       onSaved();
       onClose();
     }
   };
 
+  const shadowColor = isDark ? '#FFFFFF' : '#000000';
+
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.modalOverlay}
       >
-        <View style={[styles.container, { backgroundColor: colors.surface }]}>
+        <Pressable style={styles.backdrop} onPress={onClose} />
+
+        <View
+          style={[
+            styles.sheetContainer,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
+          ]}
+        >
           {/* Header */}
-          <View style={[styles.headerRow, { borderBottomColor: colors.outlineVariant }]}>
-            <Text style={[typography.titleLarge, { color: colors.onSurface }]}>
-              {note ? 'Edit Note' : 'New Note'}
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              {note && (
-                <Pressable onPress={handleDelete} style={styles.actionBtn}>
-                  <Ionicons name="trash-outline" size={20} color={colors.error} />
-                </Pressable>
-              )}
-              <Pressable
-                onPress={onClose}
-                style={[styles.closeButton, { backgroundColor: colors.surfaceVariant, borderRadius: radii.full }]}
-              >
-                <Ionicons name="close" size={20} color={colors.onSurface} />
-              </Pressable>
+          <View style={[styles.headerRow, { borderBottomColor: colors.border }]}>
+            <View>
+              <Text style={[styles.headerTitle, { color: colors.onSurface }]}>
+                {note ? 'EDIT NOTE' : 'WRITE NOTE'}
+              </Text>
+              <Text style={[styles.headerSub, { color: isDark ? '#A0A0A0' : '#555555' }]}>
+                Local SQLite Note Repository
+              </Text>
             </View>
+            <Pressable
+              onPress={onClose}
+              style={[
+                styles.closeButton,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  shadowColor,
+                },
+              ]}
+            >
+              <Ionicons name="close" size={20} color={colors.onSurface} />
+            </Pressable>
           </View>
 
-          <ScrollView contentContainerStyle={styles.scrollBody}>
+          <ScrollView style={styles.scrollBody} showsVerticalScrollIndicator={false}>
+            {/* Title */}
+            <Text style={[styles.fieldLabel, { color: colors.onSurface }]}>NOTE TITLE</Text>
             <TextInput
               value={title}
               onChangeText={setTitle}
-              placeholder="Note Title"
-              placeholderTextColor={colors.outline}
+              placeholder="e.g. LifeOS System Architecture"
+              placeholderTextColor="#888888"
               style={[
-                styles.titleInput,
-                typography.titleLarge,
-                { color: colors.onSurface },
+                styles.input,
+                {
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                  color: colors.onSurface,
+                },
               ]}
             />
 
-            <TextInput
-              value={tags}
-              onChangeText={setTags}
-              placeholder="Tags (e.g. #ideas, #architecture)"
-              placeholderTextColor={colors.outline}
-              style={[
-                styles.tagsInput,
-                typography.labelSmall,
-                { color: colors.primary },
-              ]}
-            />
-
+            {/* Content */}
+            <Text style={[styles.fieldLabel, { color: colors.onSurface }]}>BODY CONTENT</Text>
             <TextInput
               value={content}
               onChangeText={setContent}
-              placeholder="Write your notes, specs or reflections..."
-              placeholderTextColor={colors.outline}
+              placeholder="Write your note thoughts, ideas, or meeting snippets..."
+              placeholderTextColor="#888888"
               multiline
-              autoFocus={!note}
+              numberOfLines={6}
               style={[
-                styles.contentInput,
-                typography.bodyLarge,
-                { color: colors.onSurface },
+                styles.textArea,
+                {
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                  color: colors.onSurface,
+                },
               ]}
             />
 
-            <View style={{ marginTop: 24, marginBottom: 20 }}>
+            {/* Tags */}
+            <Text style={[styles.fieldLabel, { color: colors.onSurface }]}>TAG (OPTIONAL)</Text>
+            <TextInput
+              value={tags}
+              onChangeText={setTags}
+              placeholder="e.g. work, design, sprint"
+              placeholderTextColor="#888888"
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                  color: colors.onSurface,
+                },
+              ]}
+            />
+
+            {/* Actions */}
+            <View style={styles.actionsContainer}>
               <M3Button
-                title={isSaving ? 'Saving...' : 'Save Note'}
+                title={isSaving ? 'SAVING...' : 'SAVE NOTE'}
                 onPress={handleSave}
-                size="large"
-                disabled={(!title.trim() && !content.trim()) || isSaving}
+                variant="filled"
+                size="medium"
+                loading={isSaving}
               />
+              {note && (
+                <M3Button
+                  title="DELETE NOTE"
+                  onPress={handleDelete}
+                  variant="destructive"
+                  size="small"
+                  style={{ marginTop: 8 }}
+                />
+              )}
             </View>
+
+            <View style={{ height: 40 }} />
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
@@ -173,47 +211,82 @@ export function NoteEditorModal({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
     justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
   },
-  container: {
-    height: '85%',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+  backdrop: {
+    flex: 1,
+  },
+  sheetContainer: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    borderWidth: 2.5,
+    borderBottomWidth: 0,
+    maxHeight: '85%',
     paddingTop: 16,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 14,
-    borderBottomWidth: 1,
+    borderBottomWidth: 2.5,
   },
-  actionBtn: {
-    padding: 8,
-    marginRight: 6,
+  headerTitle: {
+    fontFamily: 'SpaceMono',
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  headerSub: {
+    fontFamily: 'SpaceMono',
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 2,
   },
   closeButton: {
-    padding: 6,
+    width: 34,
+    height: 34,
+    borderWidth: 2,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
   },
   scrollBody: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 16,
-    flexGrow: 1,
   },
-  titleInput: {
-    height: 48,
+  fieldLabel: {
+    fontFamily: 'SpaceMono',
+    fontSize: 11,
     fontWeight: '700',
+    marginTop: 14,
+    marginBottom: 6,
+    letterSpacing: 0.5,
   },
-  tagsInput: {
-    height: 32,
-    marginBottom: 8,
+  input: {
+    height: 46,
+    borderWidth: 2,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    fontFamily: 'SpaceMono',
+    fontSize: 13,
   },
-  contentInput: {
-    minHeight: 180,
+  textArea: {
+    minHeight: 120,
+    borderWidth: 2,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontFamily: 'SpaceMono',
+    fontSize: 13,
     textAlignVertical: 'top',
-    fontSize: 15,
-    lineHeight: 22,
+  },
+  actionsContainer: {
+    marginTop: 24,
   },
 });

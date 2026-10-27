@@ -6,27 +6,33 @@ import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { haptic } from '@/src/design-system/haptics';
 
 export default function TabLayout() {
-  const { colors, isDark, radii } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
 
   const renderTabIcon = (
     name: keyof typeof Ionicons.glyphMap,
     focusedName: keyof typeof Ionicons.glyphMap,
-    focused: boolean,
-    color: string
+    focused: boolean
   ) => (
     <View
       style={[
-        styles.iconPill,
-        {
-          backgroundColor: focused ? colors.primaryContainer : 'transparent',
-          borderRadius: radii.full,
+        styles.iconContainer,
+        focused && {
+          backgroundColor: colors.accentYellow,
+          borderColor: colors.border,
+          borderWidth: 2,
+          borderRadius: 8,
+          shadowColor: isDark ? '#FFFFFF' : '#000000',
+          shadowOffset: { width: 2, height: 2 },
+          shadowOpacity: 1,
+          shadowRadius: 0,
+          elevation: 2,
         },
       ]}
     >
       <Ionicons
         name={focused ? focusedName : name}
         size={20}
-        color={focused ? colors.onPrimaryContainer : typeof color === 'string' ? color : colors.outline}
+        color={focused ? '#000000' : isDark ? '#B0B0B0' : '#444444'}
       />
     </View>
   );
@@ -35,25 +41,28 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.onSurfaceVariant,
+        tabBarActiveTintColor: colors.onBackground,
+        tabBarInactiveTintColor: isDark ? '#888888' : '#666666',
         tabBarStyle: {
           backgroundColor: colors.surface,
-          borderTopColor: colors.outlineVariant,
-          borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 88 : 70,
+          borderTopColor: colors.border,
+          borderTopWidth: 3,
+          height: Platform.OS === 'ios' ? 88 : 72,
           paddingBottom: Platform.OS === 'ios' ? 26 : 10,
-          paddingTop: 8,
-          elevation: 6,
-          shadowColor: colors.shadow,
+          paddingTop: 6,
+          elevation: 8,
+          shadowColor: '#000000',
           shadowOffset: { width: 0, height: -3 },
-          shadowOpacity: isDark ? 0.35 : 0.04,
-          shadowRadius: 8,
+          shadowOpacity: 1,
+          shadowRadius: 0,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
+          fontFamily: 'SpaceMono',
+          fontSize: 10,
+          fontWeight: '700',
           marginTop: 2,
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
         },
       }}
       screenListeners={{
@@ -66,40 +75,40 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, focused }) =>
-            renderTabIcon('grid-outline', 'grid', focused, color as string),
+          tabBarIcon: ({ focused }) =>
+            renderTabIcon('grid-outline', 'grid', focused),
         }}
       />
       <Tabs.Screen
         name="planner"
         options={{
           title: 'Planner',
-          tabBarIcon: ({ color, focused }) =>
-            renderTabIcon('calendar-outline', 'calendar', focused, color as string),
+          tabBarIcon: ({ focused }) =>
+            renderTabIcon('calendar-outline', 'calendar', focused),
         }}
       />
       <Tabs.Screen
         name="tasks"
         options={{
           title: 'Tasks',
-          tabBarIcon: ({ color, focused }) =>
-            renderTabIcon('checkbox-outline', 'checkbox', focused, color as string),
+          tabBarIcon: ({ focused }) =>
+            renderTabIcon('checkbox-outline', 'checkbox', focused),
         }}
       />
       <Tabs.Screen
         name="life"
         options={{
           title: 'Life',
-          tabBarIcon: ({ color, focused }) =>
-            renderTabIcon('sparkles-outline', 'sparkles', focused, color as string),
+          tabBarIcon: ({ focused }) =>
+            renderTabIcon('sparkles-outline', 'sparkles', focused),
         }}
       />
       <Tabs.Screen
         name="assistant"
         options={{
-          title: 'Assistant',
-          tabBarIcon: ({ color, focused }) =>
-            renderTabIcon('chatbubble-ellipses-outline', 'chatbubble-ellipses', focused, color as string),
+          title: 'AI Bot',
+          tabBarIcon: ({ focused }) =>
+            renderTabIcon('chatbubble-ellipses-outline', 'chatbubble-ellipses', focused),
         }}
       />
     </Tabs>
@@ -107,8 +116,8 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  iconPill: {
-    paddingHorizontal: 16,
+  iconContainer: {
+    paddingHorizontal: 12,
     paddingVertical: 3,
     alignItems: 'center',
     justifyContent: 'center',

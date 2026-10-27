@@ -15,7 +15,7 @@ import Animated, {
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { haptic } from '@/src/design-system/haptics';
 
-type CardVariant = 'elevated' | 'filled' | 'outlined';
+type CardVariant = 'elevated' | 'filled' | 'outlined' | 'yellow' | 'coral' | 'mint' | 'lilac';
 
 interface M3CardProps {
   children: React.ReactNode;
@@ -30,62 +30,65 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export function M3Card({
   children,
   onPress,
-  variant = 'filled',
+  variant = 'elevated',
   style,
   padding,
 }: M3CardProps) {
   const { colors, radii, spacing, isDark } = useAppTheme();
-  const scale = useSharedValue(1);
+  const pressedX = useSharedValue(0);
+  const pressedY = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [
+      { translateX: pressedX.value },
+      { translateY: pressedY.value },
+    ],
   }));
 
   const handlePressIn = () => {
     if (onPress) {
-      scale.value = withTiming(0.98, { duration: 100 });
+      pressedX.value = withTiming(2, { duration: 60 });
+      pressedY.value = withTiming(2, { duration: 60 });
       haptic.light();
     }
   };
 
   const handlePressOut = () => {
     if (onPress) {
-      scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+      pressedX.value = withSpring(0, { damping: 15, stiffness: 350 });
+      pressedY.value = withSpring(0, { damping: 15, stiffness: 350 });
     }
   };
 
   let backgroundColor = colors.surface;
-  let borderWidth = 1;
-  let borderColor = colors.outlineVariant;
-  let elevation = 0;
-  let shadowOpacity = 0;
+  let borderColor = colors.border;
+  let shadowColor = isDark ? '#FFFFFF' : '#000000';
 
   if (variant === 'filled') {
     backgroundColor = colors.surfaceVariant;
-    borderWidth = 0;
-  } else if (variant === 'elevated') {
-    backgroundColor = colors.surfaceElevated;
-    elevation = 2;
-    shadowOpacity = isDark ? 0.3 : 0.05;
-    borderWidth = 1;
-    borderColor = colors.outlineVariant;
+  } else if (variant === 'yellow') {
+    backgroundColor = colors.accentYellow;
+  } else if (variant === 'coral') {
+    backgroundColor = colors.accentCoral;
+  } else if (variant === 'mint') {
+    backgroundColor = colors.accentJade;
+  } else if (variant === 'lilac') {
+    backgroundColor = colors.accentLilac;
   } else if (variant === 'outlined') {
-    backgroundColor = colors.surface;
-    borderWidth = 1;
-    borderColor = colors.outlineVariant;
+    backgroundColor = 'transparent';
   }
 
   const cardStyle: ViewStyle = {
     backgroundColor,
-    borderRadius: radii.xl,
-    padding: padding ?? spacing.lg,
-    borderWidth,
+    borderRadius: radii.lg,
+    padding: padding ?? spacing.base,
+    borderWidth: 2.5,
     borderColor,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity,
-    shadowRadius: 10,
-    elevation,
+    shadowColor,
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
   };
 
   if (onPress) {
