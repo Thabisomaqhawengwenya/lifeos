@@ -1,66 +1,104 @@
-import { SymbolView } from 'expo-symbols';
-import { Link, Tabs } from 'expo-router';
-import { Platform, Pressable } from 'react-native';
-
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
+import React from 'react';
+import { Tabs } from 'expo-router';
+import { Platform, View, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useAppTheme } from '@/src/design-system/ThemeContext';
+import { haptic } from '@/src/design-system/haptics';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { colors, isDark } = useAppTheme();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
-      }}>
+        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.onSurfaceVariant,
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.divider,
+          borderTopWidth: 1,
+          height: Platform.OS === 'ios' ? 84 : 64,
+          paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+          paddingTop: 8,
+          elevation: 8,
+          shadowColor: colors.shadow,
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: isDark ? 0.3 : 0.05,
+          shadowRadius: 4,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+        },
+      }}
+      screenListeners={{
+        tabPress: () => {
+          haptic.selection();
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: 'chevron.left.forwardslash.chevron.right',
-                android: 'code',
-                web: 'code',
-              }}
-              tintColor={color}
-              size={28}
+          title: 'Home',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'grid' : 'grid-outline'}
+              size={22}
+              color={typeof color === 'string' ? color : colors.primary}
             />
-          ),
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable style={{ marginRight: 15 }}>
-                {({ pressed }) => (
-                  <SymbolView
-                    name={{ ios: 'info.circle', android: 'info', web: 'info' }}
-                    size={25}
-                    tintColor={Colors[colorScheme].text}
-                    style={{ opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
           ),
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="planner"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: 'chevron.left.forwardslash.chevron.right',
-                android: 'code',
-                web: 'code',
-              }}
-              tintColor={color}
-              size={28}
+          title: 'Planner',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'calendar' : 'calendar-outline'}
+              size={22}
+              color={typeof color === 'string' ? color : colors.primary}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="tasks"
+        options={{
+          title: 'Tasks',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'checkbox' : 'checkbox-outline'}
+              size={22}
+              color={typeof color === 'string' ? color : colors.primary}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="life"
+        options={{
+          title: 'Life',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'sparkles' : 'sparkles-outline'}
+              size={22}
+              color={typeof color === 'string' ? color : colors.primary}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="assistant"
+        options={{
+          title: 'Assistant',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline'}
+              size={22}
+              color={typeof color === 'string' ? color : colors.primary}
             />
           ),
         }}
