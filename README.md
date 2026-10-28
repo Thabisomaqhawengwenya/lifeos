@@ -6,13 +6,13 @@
 
 ---
 
-## 📲 Download & Install Android APK
+## 📲 Download & Install Android APK (v1.1.0 Neo-Brutalism & OTA)
 
 | Platform | Download Link | Build Type | Status |
 | :--- | :--- | :--- | :--- |
-| **Android (APK)** | [⬇️ Download LifeOS v1.0.0 APK](https://github.com/Thabisomaqhawengwenya/lifeos/releases/download/v1.0.0/LifeOS-v1.0.0.apk) | Standalone Preview APK (`com.maqhawe.lifeos`) | ✅ Ready |
-| **GitHub Release** | [📦 GitHub Release v1.0.0](https://github.com/Thabisomaqhawengwenya/lifeos/releases/tag/v1.0.0) | Official Release Asset | ✅ Live |
-| **Expo EAS Cloud** | [🌐 Expo Build Details](https://expo.dev/accounts/maqhawengwenya/projects/LifeOS/builds/c07108e4-c2d4-4646-be56-04b805b15cc7) | EAS Cloud Artifact | ✅ Complete |
+| **Android (APK v1.1.0)** | [⬇️ Download LifeOS v1.1.0 APK](https://github.com/Thabisomaqhawengwenya/lifeos/releases/download/v1.1.0/LifeOS-v1.1.0.apk) | Standalone Preview APK (`com.maqhawe.lifeos`) | ✅ Latest Release |
+| **GitHub Release v1.1.0** | [📦 GitHub Release v1.1.0](https://github.com/Thabisomaqhawengwenya/lifeos/releases/tag/v1.1.0) | Official Release Asset with OTA engine | ✅ Live |
+| **Expo EAS Cloud** | [🌐 Expo Build Details](https://expo.dev/accounts/maqhawengwenya/projects/LifeOS/builds/2bc5ec3b-779a-4f5a-9523-c6d840ea30c6) | EAS Cloud Artifact (`2bc5ec3b`) | ✅ Complete |
 
 ---
 
