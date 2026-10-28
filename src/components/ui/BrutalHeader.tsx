@@ -1,11 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { haptic } from '@/src/design-system/haptics';
+import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-interface M3HeaderProps {
+interface BrutalHeaderProps {
   title: string;
   subtitle?: string;
   badge?: string;
@@ -14,14 +14,14 @@ interface M3HeaderProps {
   onBack?: () => void;
 }
 
-export function M3Header({
+export function BrutalHeader({
   title,
   subtitle,
   badge,
   rightAction,
   showBack = false,
   onBack,
-}: M3HeaderProps) {
+}: BrutalHeaderProps) {
   const insets = useSafeAreaInsets();
   const { colors, spacing, isDark } = useAppTheme();
 
@@ -159,10 +159,9 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
     marginTop: 4,
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
   },
   rightActionContainer: {
     flexDirection: 'row',

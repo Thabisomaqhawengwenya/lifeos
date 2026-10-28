@@ -19,6 +19,7 @@ export class NotificationService {
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
         name: 'LifeOS Reminders',
+        // eslint-disable-next-line import/namespace
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#0F4C3A',

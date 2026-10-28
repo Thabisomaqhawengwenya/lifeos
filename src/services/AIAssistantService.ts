@@ -1,8 +1,7 @@
-import { TaskRepository } from '../repositories/TaskRepository';
 import { FinanceRepository } from '../repositories/FinanceRepository';
 import { HabitRepository } from '../repositories/HabitRepository';
 import { NoteRepository } from '../repositories/NoteAndGoalRepository';
-import { NotificationService } from './NotificationService';
+import { TaskRepository } from '../repositories/TaskRepository';
 
 export interface ProposedAIAction {
   id: string;

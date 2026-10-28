@@ -1,35 +1,35 @@
-import React, { useState, useCallback } from 'react';
-import {
-  ScrollView,
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-} from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useAppTheme } from '@/src/design-system/ThemeContext';
-import { M3Header } from '@/src/components/ui/M3Header';
-import { M3Card } from '@/src/components/ui/M3Card';
-import { M3Chip } from '@/src/components/ui/M3Chip';
-import { M3FAB } from '@/src/components/ui/M3FAB';
-import { haptic } from '@/src/design-system/haptics';
-import { TaskRepository, TaskItem } from '@/src/repositories/TaskRepository';
-import { HabitRepository, HabitItem } from '@/src/repositories/HabitRepository';
-import { TaskDetailModal } from '@/src/components/tasks/TaskDetailModal';
 import { GlobalSearchModal } from '@/src/components/search/GlobalSearchModal';
+import { TaskDetailModal } from '@/src/components/tasks/TaskDetailModal';
+import { BrutalCard } from '@/src/components/ui/BrutalCard';
+import { BrutalFAB } from '@/src/components/ui/BrutalFAB';
+import { haptic } from '@/src/design-system/haptics';
+import { useAppTheme } from '@/src/design-system/ThemeContext';
+import { HabitItem, HabitRepository } from '@/src/repositories/HabitRepository';
+import { TaskItem, TaskRepository } from '@/src/repositories/TaskRepository';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import {
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const { colors, spacing, isDark, mode, setThemeMode } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [habits, setHabits] = useState<HabitItem[]>([]);
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
   const [searchVisible, setSearchVisible] = useState(false);
 
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const greeting = hour < 12 ? 'Morning' : hour < 17 ? 'Afternoon' : 'Evening';
   const todayFormatted = new Date().toLocaleDateString('en-US', {
-    weekday: 'short',
+    weekday: 'long',
     month: 'short',
     day: 'numeric',
   });
@@ -86,258 +86,213 @@ export default function HomeScreen() {
   };
 
   const completedCount = tasks.filter((t) => t.is_completed).length;
+  const pendingTasks = tasks.filter((t) => !t.is_completed);
   const bestStreak = habits.reduce((max, h) => Math.max(max, h.streak_current), 0);
   const shadowColor = isDark ? '#FFFFFF' : '#000000';
+  const habitsLoggedToday = habits.filter((h) => h.is_logged_today).length;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <M3Header
-        badge="NEO-BRUTALISM • V1.1.0"
-        title={`${greeting}, Mr Q`}
-        subtitle={`${todayFormatted} • Local SQLite Active`}
-        rightAction={
-          <View style={styles.headerActions}>
-            <Pressable
-              onPress={() => setSearchVisible(true)}
-              style={[
-                styles.iconButton,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  shadowColor,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Global search"
-            >
-              <Ionicons name="search" size={18} color={colors.onBackground} />
-            </Pressable>
-            <Pressable
-              onPress={toggleTheme}
-              style={[
-                styles.iconButton,
-                {
-                  backgroundColor: colors.accentYellow,
-                  borderColor: colors.border,
-                  shadowColor,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Toggle light or dark theme"
-            >
-              <Ionicons
-                name={isDark ? 'moon' : 'sunny'}
-                size={18}
-                color="#000000"
-              />
-            </Pressable>
-          </View>
-        }
-      />
+      {/* Top bar — not using M3Header here, doing it inline for a different feel */}
+      <View
+        style={[
+          styles.topBar,
+          {
+            paddingTop: Math.max(insets.top, 12) + 4,
+            backgroundColor: colors.background,
+            borderBottomColor: colors.border,
+          },
+        ]}
+      >
+        <View style={styles.topBarLeft}>
+          <Text style={[styles.greetingLabel, { color: isDark ? '#888' : '#666' }]}>
+            {todayFormatted}
+          </Text>
+          <Text style={[styles.greetingName, { color: colors.onBackground }]}>
+            {greeting}, Mr Q
+          </Text>
+        </View>
+        <View style={styles.topBarRight}>
+          <Pressable
+            onPress={() => setSearchVisible(true)}
+            style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.border, shadowColor }]}
+            accessibilityRole="button"
+            accessibilityLabel="Global search"
+          >
+            <Ionicons name="search" size={18} color={colors.onBackground} />
+          </Pressable>
+          <Pressable
+            onPress={toggleTheme}
+            style={[styles.iconBtn, { backgroundColor: colors.accentYellow, borderColor: colors.border, shadowColor }]}
+            accessibilityRole="button"
+            accessibilityLabel="Toggle theme"
+          >
+            <Ionicons name={isDark ? 'moon' : 'sunny'} size={18} color="#000000" />
+          </Pressable>
+        </View>
+      </View>
 
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.base }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Daily Focus Hero Card (Neo-Brutalist Layout) */}
-        <M3Card variant="elevated" style={styles.heroCard}>
-          <View style={styles.heroHeader}>
-            <View>
-              <View style={styles.eyebrowTag}>
-                <Text style={styles.eyebrowText}>DAILY MOMENTUM</Text>
-              </View>
-              <Text style={[styles.heroHeadline, { color: colors.onSurface }]}>
-                Execution Mode
-              </Text>
-            </View>
-            <View style={styles.liveBadge}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveText}>SYNCED</Text>
-            </View>
+        {/* 3-col metrics strip — standalone, not inside a card */}
+        <View style={styles.metricsStrip}>
+          <View style={[styles.metricBlock, { backgroundColor: colors.accentYellow, borderColor: colors.border, shadowColor }]}>
+            <Text style={styles.metricNum}>{completedCount}/{tasks.length}</Text>
+            <Text style={styles.metricLbl}>TASKS</Text>
           </View>
-
-          {/* Quick Metrics Bar (3 Distinct Brutalist Blocks) */}
-          <View style={styles.metricsGrid}>
-            <View style={[styles.metricTile, { backgroundColor: colors.accentYellow }]}>
-              <Text style={styles.metricVal}>
-                {completedCount}/{tasks.length}
-              </Text>
-              <Text style={styles.metricLbl}>TASKS</Text>
-            </View>
-
-            <View style={[styles.metricTile, { backgroundColor: colors.accentCoral }]}>
-              <Text style={[styles.metricVal, { color: '#FFFFFF' }]}>
-                {bestStreak}d
-              </Text>
-              <Text style={[styles.metricLbl, { color: '#FFFFFF' }]}>STREAK</Text>
-            </View>
-
-            <View style={[styles.metricTile, { backgroundColor: colors.accentJade }]}>
-              <Text style={styles.metricVal}>
-                {habits.filter((h) => h.is_logged_today).length}/{habits.length}
-              </Text>
-              <Text style={styles.metricLbl}>HABITS</Text>
-            </View>
+          <View style={[styles.metricBlock, { backgroundColor: colors.accentCoral, borderColor: colors.border, shadowColor }]}>
+            <Text style={[styles.metricNum, { color: '#fff' }]}>{bestStreak}d</Text>
+            <Text style={[styles.metricLbl, { color: '#fff' }]}>STREAK</Text>
           </View>
-        </M3Card>
-
-        {/* AI Insight Card (Tuckii Lilac with Brutalist Border & Shadow) */}
-        <M3Card variant="lilac" style={styles.aiInsightCard}>
-          <View style={styles.aiInsightRow}>
-            <View style={styles.aiIconBox}>
-              <Ionicons name="sparkles" size={18} color="#000000" />
-            </View>
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={styles.aiTag}>OFFLINE AI INSIGHT</Text>
-              <Text style={styles.aiMessage}>
-                {tasks.filter((t) => !t.is_completed).length > 0
-                  ? `You have ${tasks.filter((t) => !t.is_completed).length} open deliverables. Stay locked in on high-priority items today.`
-                  : 'All deliverables are completed! Zero backlog maintained.'}
-              </Text>
-            </View>
+          <View style={[styles.metricBlock, { backgroundColor: colors.accentJade, borderColor: colors.border, shadowColor }]}>
+            <Text style={styles.metricNum}>{habitsLoggedToday}/{habits.length}</Text>
+            <Text style={styles.metricLbl}>HABITS</Text>
           </View>
-        </M3Card>
+        </View>
 
-        {/* Today's Priorities Section Header */}
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleRow}>
-            <View style={styles.sectionDot} />
-            <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>
-              TODAY'S PRIORITIES
+        {/* AI insight — inline banner, no card wrapper */}
+        {pendingTasks.length > 0 && (
+          <View style={[styles.insightBanner, { borderColor: colors.border, backgroundColor: colors.accentLilac }]}>
+            <Ionicons name="sparkles" size={14} color="#000" />
+            <Text style={styles.insightText}>
+              {pendingTasks.length} open {pendingTasks.length === 1 ? 'task' : 'tasks'} — focus on high-priority items first.
             </Text>
           </View>
-          <Pressable
-            onPress={() => router.push('/(tabs)/tasks')}
-            style={styles.viewAllBtn}
-            accessibilityRole="button"
-          >
-            <Text style={styles.viewAllText}>VIEW ALL →</Text>
+        )}
+
+        {/* Priorities section */}
+        <View style={styles.sectionRow}>
+          <View style={styles.sectionLabelRow}>
+            <View style={[styles.sectionPip, { backgroundColor: colors.accentYellow, borderColor: colors.border }]} />
+            <Text style={[styles.sectionLabel, { color: colors.onBackground }]}>TODAY&apos;S PRIORITIES</Text>
+          </View>
+          <Pressable onPress={() => router.push('/(tabs)/tasks')} accessibilityRole="button">
+            <Text style={[styles.viewAll, { color: isDark ? '#aaa' : '#555' }]}>{'all →'}</Text>
           </Pressable>
         </View>
 
-        {tasks.slice(0, 3).map((task) => (
-          <M3Card
-            key={task.id}
-            variant="elevated"
-            style={[styles.taskCard, task.is_completed && { opacity: 0.65 }]}
-            onPress={() => setSelectedTask(task)}
-          >
-            <View style={styles.taskCardContent}>
-              <Pressable
-                onPress={() => toggleTask(task.id)}
-                style={[
-                  styles.checkbox,
-                  {
-                    borderColor: '#000000',
-                    backgroundColor: task.is_completed ? colors.accentYellow : colors.surface,
-                  },
-                ]}
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: task.is_completed }}
-              >
-                {task.is_completed && (
-                  <Ionicons name="checkmark" size={18} color="#000000" />
-                )}
-              </Pressable>
-              <View style={styles.taskTextContainer}>
-                <Text
+        {tasks.length === 0 ? (
+          <View style={[styles.emptyStrip, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+            <Text style={[styles.emptyStripText, { color: isDark ? '#888' : '#999' }]}>
+              No tasks yet — tap + to capture your first one
+            </Text>
+          </View>
+        ) : (
+          tasks.slice(0, 3).map((task) => (
+            <BrutalCard
+              key={task.id}
+              variant="elevated"
+              style={[styles.taskCard, task.is_completed && { opacity: 0.55 }]}
+              onPress={() => setSelectedTask(task)}
+            >
+              <View style={styles.taskRow}>
+                <Pressable
+                  onPress={() => toggleTask(task.id)}
                   style={[
-                    styles.taskTitle,
-                    {
-                      color: colors.onSurface,
-                      textDecorationLine: task.is_completed ? 'line-through' : 'none',
-                    },
+                    styles.checkbox,
+                    { borderColor: colors.border, backgroundColor: task.is_completed ? colors.accentYellow : colors.surface },
                   ]}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: task.is_completed }}
                 >
-                  {task.title}
-                </Text>
-                <View style={styles.taskMetaRow}>
-                  <View style={styles.tagBadge}>
-                    <Text style={styles.tagBadgeText}>
-                      {task.category.toUpperCase()}
-                    </Text>
-                  </View>
-                  <View
+                  {task.is_completed && <Ionicons name="checkmark" size={16} color="#000" />}
+                </Pressable>
+                <View style={styles.taskBody}>
+                  <Text
                     style={[
-                      styles.priorityBadge,
-                      {
-                        backgroundColor:
-                          task.priority === 'high'
-                            ? colors.accentRed
-                            : task.priority === 'medium'
-                            ? colors.accentYellow
-                            : colors.accentSky,
-                      },
+                      styles.taskTitle,
+                      { color: colors.onSurface, textDecorationLine: task.is_completed ? 'line-through' : 'none' },
                     ]}
+                    numberOfLines={1}
                   >
-                    <Text
+                    {task.title}
+                  </Text>
+                  <View style={styles.taskMeta}>
+                    <View style={[styles.badge, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                      <Text style={styles.badgeText}>{task.category.toUpperCase()}</Text>
+                    </View>
+                    <View
                       style={[
-                        styles.priorityText,
+                        styles.badge,
                         {
-                          color: task.priority === 'high' ? '#FFFFFF' : '#000000',
+                          borderColor: colors.border,
+                          backgroundColor:
+                            task.priority === 'high' ? colors.accentRed
+                            : task.priority === 'medium' ? colors.accentYellow
+                            : colors.accentSky,
                         },
                       ]}
                     >
-                      {task.priority.toUpperCase()}
-                    </Text>
+                      <Text style={[styles.badgeText, { color: task.priority === 'high' ? '#fff' : '#000' }]}>
+                        {task.priority.toUpperCase()}
+                      </Text>
+                    </View>
                   </View>
                 </View>
+                <Ionicons name="chevron-forward" size={14} color={isDark ? '#666' : '#ccc'} />
               </View>
-            </View>
-          </M3Card>
-        ))}
+            </BrutalCard>
+          ))
+        )}
 
-        {/* Daily Habits Check-in Section Header */}
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleRow}>
-            <View style={[styles.sectionDot, { backgroundColor: colors.accentJade }]} />
-            <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>
-              HABIT STREAKS
-            </Text>
+        {/* Habits section — grid cards instead of chips */}
+        <View style={[styles.sectionRow, { marginTop: 28 }]}>
+          <View style={styles.sectionLabelRow}>
+            <View style={[styles.sectionPip, { backgroundColor: colors.accentJade, borderColor: colors.border }]} />
+            <Text style={[styles.sectionLabel, { color: colors.onBackground }]}>HABIT STREAKS</Text>
           </View>
-          <Pressable
-            onPress={() => router.push('/(tabs)/life')}
-            style={styles.viewAllBtn}
-            accessibilityRole="button"
-          >
-            <Text style={styles.viewAllText}>MANAGE →</Text>
+          <Pressable onPress={() => router.push('/(tabs)/life')} accessibilityRole="button">
+            <Text style={[styles.viewAll, { color: isDark ? '#aaa' : '#555' }]}>{'manage →'}</Text>
           </Pressable>
         </View>
 
-        <View style={styles.chipsRow}>
+        <View style={styles.habitGrid}>
           {habits.map((h) => (
-            <M3Chip
+            <Pressable
               key={h.id}
-              label={h.name}
-              selected={Boolean(h.is_logged_today)}
               onPress={() => toggleHabit(h.id)}
-              badge={`${h.streak_current}d`}
-              colorScheme="mint"
-              icon={
+              style={[
+                styles.habitCard,
+                {
+                  backgroundColor: h.is_logged_today ? colors.accentJade : colors.surface,
+                  borderColor: colors.border,
+                  shadowColor,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={`${h.name}, ${h.is_logged_today ? 'completed today' : 'tap to complete'}`}
+            >
+              <View style={styles.habitCardTop}>
                 <Ionicons
                   name={h.is_logged_today ? 'flame' : 'flame-outline'}
-                  size={14}
-                  color="#000000"
+                  size={20}
+                  color={h.is_logged_today ? '#000' : isDark ? '#666' : '#bbb'}
                 />
-              }
-            />
+                <View style={[styles.streakPill, { backgroundColor: colors.accentYellow, borderColor: colors.border }]}>
+                  <Text style={styles.streakPillText}>{h.streak_current}d</Text>
+                </View>
+              </View>
+              <Text style={[styles.habitName, { color: h.is_logged_today ? '#000' : colors.onSurface }]} numberOfLines={2}>
+                {h.name}
+              </Text>
+              <Text style={[styles.habitFreq, { color: h.is_logged_today ? '#333' : isDark ? '#666' : '#aaa' }]}>
+                {h.target_days_per_week}×/week
+              </Text>
+            </Pressable>
           ))}
         </View>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 90 }} />
       </ScrollView>
 
-      {/* Floating Action Button for Quick Capture */}
-      <M3FAB
-        onPress={() => {
-          haptic.medium();
-          router.push('/modal');
-        }}
+      <BrutalFAB
+        onPress={() => { haptic.medium(); router.push('/modal'); }}
         icon="add"
         style={styles.fab}
       />
 
-      {/* Task Detail Modal */}
       <TaskDetailModal
         visible={Boolean(selectedTask)}
         task={selectedTask}
@@ -345,7 +300,6 @@ export default function HomeScreen() {
         onUpdated={loadData}
       />
 
-      {/* Global Search Modal */}
       <GlobalSearchModal
         visible={searchVisible}
         onClose={() => setSearchVisible(false)}
@@ -355,267 +309,90 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingTop: 16,
-    paddingBottom: 24,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  iconButton: {
-    width: 38,
-    height: 38,
-    borderWidth: 2,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
-  },
-  heroCard: {
-    marginBottom: 16,
-  },
-  heroHeader: {
+  container: { flex: 1 },
+
+  // Top bar (inline, not M3Header)
+  topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
+    alignItems: 'flex-end',
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    borderBottomWidth: 2.5,
   },
-  eyebrowTag: {
-    backgroundColor: '#FFE500',
-    borderWidth: 2,
-    borderColor: '#000000',
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    alignSelf: 'flex-start',
-    marginBottom: 6,
+  topBarLeft: { flex: 1 },
+  topBarRight: { flexDirection: 'row', gap: 8 },
+  greetingLabel: { fontSize: 12, fontWeight: '500', letterSpacing: 0.2 },
+  greetingName: { fontFamily: 'SpaceMono', fontSize: 22, fontWeight: '900', marginTop: 2, letterSpacing: -0.5 },
+  iconBtn: {
+    width: 38, height: 38, borderWidth: 2, borderRadius: 8,
+    alignItems: 'center', justifyContent: 'center',
+    shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0, elevation: 2,
   },
-  eyebrowText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#000000',
-    letterSpacing: 0.5,
+
+  scrollContent: { paddingTop: 20, paddingBottom: 24 },
+
+  // Metrics strip — standalone blocks, no card wrapper
+  metricsStrip: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+  metricBlock: {
+    flex: 1, borderWidth: 2.5, borderRadius: 8,
+    paddingVertical: 14, alignItems: 'center',
+    shadowOffset: { width: 3, height: 3 }, shadowOpacity: 1, shadowRadius: 0, elevation: 3,
   },
-  heroHeadline: {
-    fontFamily: 'SpaceMono',
-    fontSize: 20,
-    fontWeight: '900',
-    letterSpacing: -0.5,
+  metricNum: { fontFamily: 'SpaceMono', fontSize: 20, fontWeight: '900', color: '#000' },
+  metricLbl: { fontFamily: 'SpaceMono', fontSize: 9, fontWeight: '700', color: '#000', marginTop: 3, letterSpacing: 0.8 },
+
+  // Insight banner — inline, no card
+  insightBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    borderWidth: 2, borderRadius: 6, paddingHorizontal: 12, paddingVertical: 8,
+    marginBottom: 24,
   },
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#000000',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    gap: 4,
-    shadowColor: '#000000',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
+  insightText: { flex: 1, fontSize: 13, fontWeight: '500', color: '#000', lineHeight: 18 },
+
+  // Section headers
+  sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  sectionLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  sectionPip: { width: 10, height: 10, borderRadius: 2, borderWidth: 1.5 },
+  sectionLabel: { fontFamily: 'SpaceMono', fontSize: 12, fontWeight: '900', letterSpacing: 0.5 },
+  viewAll: { fontSize: 13, fontWeight: '600' },
+
+  // Empty strip
+  emptyStrip: {
+    borderWidth: 2, borderRadius: 8, borderStyle: 'dashed',
+    paddingVertical: 20, alignItems: 'center', marginBottom: 8,
   },
-  liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#00C853',
-  },
-  liveText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#000000',
-  },
-  metricsGrid: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  metricTile: {
-    flex: 1,
-    borderWidth: 2,
-    borderColor: '#000000',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
-  },
-  metricVal: {
-    fontFamily: 'SpaceMono',
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#000000',
-  },
-  metricLbl: {
-    fontFamily: 'SpaceMono',
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#000000',
-    marginTop: 2,
-    letterSpacing: 0.5,
-  },
-  aiInsightCard: {
-    marginBottom: 20,
-  },
-  aiInsightRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  aiIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: '#FFE500',
-    borderWidth: 2,
-    borderColor: '#000000',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-  },
-  aiTag: {
-    fontFamily: 'SpaceMono',
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#000000',
-    letterSpacing: 0.5,
-  },
-  aiMessage: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#000000',
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-    marginTop: 6,
-  },
-  sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  sectionDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 2,
-    backgroundColor: '#FFE500',
-    borderWidth: 1.5,
-    borderColor: '#000000',
-  },
-  sectionTitle: {
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  viewAllBtn: {
-    borderWidth: 1.5,
-    borderColor: '#000000',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    backgroundColor: '#FFFFFF',
-  },
-  viewAllText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#000000',
-  },
-  taskCard: {
-    marginBottom: 10,
-  },
-  taskCardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  emptyStripText: { fontSize: 13 },
+
+  // Task cards
+  taskCard: { marginBottom: 8 },
+  taskRow: { flexDirection: 'row', alignItems: 'center' },
   checkbox: {
-    width: 26,
-    height: 26,
-    borderWidth: 2.5,
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-    shadowColor: '#000000',
-    shadowOffset: { width: 1.5, height: 1.5 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
+    width: 24, height: 24, borderWidth: 2.5, borderRadius: 5,
+    alignItems: 'center', justifyContent: 'center', marginRight: 12,
+    shadowColor: '#000', shadowOffset: { width: 1.5, height: 1.5 }, shadowOpacity: 1, shadowRadius: 0, elevation: 2,
   },
-  taskTextContainer: {
-    flex: 1,
+  taskBody: { flex: 1 },
+  taskTitle: { fontSize: 15, fontWeight: '600', marginBottom: 5 },
+  taskMeta: { flexDirection: 'row', gap: 6 },
+  badge: { borderWidth: 1.5, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 1 },
+  badgeText: { fontFamily: 'SpaceMono', fontSize: 9, fontWeight: '700', color: '#000' },
+
+  // Habit grid — 2 columns
+  habitGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  habitCard: {
+    width: '47%',
+    borderWidth: 2.5, borderRadius: 10,
+    padding: 14,
+    shadowOffset: { width: 3, height: 3 }, shadowOpacity: 1, shadowRadius: 0, elevation: 3,
   },
-  taskTitle: {
-    fontFamily: 'SpaceMono',
-    fontSize: 14,
-    fontWeight: '700',
+  habitCardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  streakPill: {
+    borderWidth: 1.5, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 1,
   },
-  taskMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-    gap: 6,
-  },
-  tagBadge: {
-    borderWidth: 1.5,
-    borderColor: '#000000',
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  tagBadgeText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#000000',
-  },
-  priorityBadge: {
-    borderWidth: 1.5,
-    borderColor: '#000000',
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-  },
-  priorityText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 9,
-    fontWeight: '700',
-  },
-  chipsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 24,
-    right: 20,
-  },
+  streakPillText: { fontFamily: 'SpaceMono', fontSize: 10, fontWeight: '700', color: '#000' },
+  habitName: { fontSize: 14, fontWeight: '600', lineHeight: 19 },
+  habitFreq: { fontSize: 11, marginTop: 4 },
+
+  fab: { position: 'absolute', bottom: 24, right: 20 },
 });

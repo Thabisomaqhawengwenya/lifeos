@@ -1,30 +1,34 @@
-import React, { useState, useCallback } from 'react';
-import {
-  ScrollView,
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  RefreshControl,
-} from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useAppTheme } from '@/src/design-system/ThemeContext';
-import { M3Header } from '@/src/components/ui/M3Header';
-import { M3Card } from '@/src/components/ui/M3Card';
-import { M3Chip } from '@/src/components/ui/M3Chip';
-import { M3FAB } from '@/src/components/ui/M3FAB';
-import { M3EmptyState } from '@/src/components/ui/M3EmptyState';
-import { haptic } from '@/src/design-system/haptics';
-import { TaskRepository, TaskItem } from '@/src/repositories/TaskRepository';
-import { TaskDetailModal } from '@/src/components/tasks/TaskDetailModal';
 import { GlobalSearchModal } from '@/src/components/search/GlobalSearchModal';
+import { TaskDetailModal } from '@/src/components/tasks/TaskDetailModal';
+import { BrutalFAB } from '@/src/components/ui/BrutalFAB';
+import { BrutalHeader } from '@/src/components/ui/BrutalHeader';
+import { haptic } from '@/src/design-system/haptics';
+import { useAppTheme } from '@/src/design-system/ThemeContext';
+import { TaskItem, TaskRepository } from '@/src/repositories/TaskRepository';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import {
+    Pressable,
+    RefreshControl,
+    SectionList,
+    StyleSheet,
+    Text,
+    View
+} from 'react-native';
 
-type FilterType = 'all' | 'today' | 'upcoming' | 'completed';
+type FilterType = 'all' | 'today' | 'upcoming' | 'done';
+
+const FILTERS: { key: FilterType; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'today', label: 'Today' },
+  { key: 'upcoming', label: 'Upcoming' },
+  { key: 'done', label: 'Done' },
+];
 
 export default function TasksScreen() {
-  const { colors, spacing, isDark } = useAppTheme();
-  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const { colors, isDark } = useAppTheme();
+  const [filter, setFilter] = useState<FilterType>('all');
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
@@ -32,18 +36,13 @@ export default function TasksScreen() {
 
   const loadTasks = useCallback(async () => {
     try {
-      const data = await TaskRepository.getAllTasks();
-      setTasks(data);
+      setTasks(await TaskRepository.getAllTasks());
     } catch (err) {
       console.warn('Error loading tasks:', err);
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadTasks();
-    }, [loadTasks])
-  );
+  useFocusEffect(useCallback(() => { loadTasks(); }, [loadTasks]));
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -57,199 +56,194 @@ export default function TasksScreen() {
     await loadTasks();
   };
 
-  const filteredTasks = tasks.filter((t) => {
-    if (activeFilter === 'today') return (t.due_date || '').includes('Today');
-    if (activeFilter === 'upcoming') return !t.is_completed && !(t.due_date || '').includes('Today');
-    if (activeFilter === 'completed') return t.is_completed;
+  const filtered = tasks.filter((t) => {
+    if (filter === 'today') return (t.due_date || '').toLowerCase().includes('today');
+    if (filter === 'upcoming') return !t.is_completed && !(t.due_date || '').toLowerCase().includes('today');
+    if (filter === 'done') return t.is_completed;
     return true;
   });
+
+  // Group by priority for 'all' view, flat for others
+  const sections =
+    filter === 'all'
+      ? [
+          { title: 'HIGH', data: filtered.filter((t) => t.priority === 'high' && !t.is_completed) },
+          { title: 'MEDIUM', data: filtered.filter((t) => t.priority === 'medium' && !t.is_completed) },
+          { title: 'LOW', data: filtered.filter((t) => t.priority === 'low' && !t.is_completed) },
+          { title: 'DONE', data: filtered.filter((t) => t.is_completed) },
+        ].filter((s) => s.data.length > 0)
+      : [{ title: '', data: filtered }];
 
   const pendingCount = tasks.filter((t) => !t.is_completed).length;
   const shadowColor = isDark ? '#FFFFFF' : '#000000';
 
+  const priorityColor = (p: string) => {
+    if (p === 'high') return colors.accentRed;
+    if (p === 'medium') return colors.accentYellow;
+    return colors.accentSky;
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <M3Header
-        badge="DELIVERABLES • CRITICAL"
-        title="Tasks Matrix"
-        subtitle={`${pendingCount} open deliverables in local SQLite`}
+      <BrutalHeader
+        badge="TASKS"
+        title="Task List"
+        subtitle={`${pendingCount} pending`}
         rightAction={
           <Pressable
             onPress={() => setSearchVisible(true)}
-            style={[
-              styles.searchHeaderBtn,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-                shadowColor,
-              },
-            ]}
+            style={[styles.searchBtn, { backgroundColor: colors.surface, borderColor: colors.border, shadowColor }]}
             accessibilityRole="button"
-            accessibilityLabel="Search all items"
+            accessibilityLabel="Search tasks"
           >
             <Ionicons name="search" size={18} color={colors.onBackground} />
           </Pressable>
         }
       />
 
-      {/* Filter Chips Bar */}
-      <View style={[styles.filterStrip, { borderBottomColor: colors.border }]}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-          <M3Chip
-            label="ALL"
-            selected={activeFilter === 'all'}
-            onPress={() => setActiveFilter('all')}
-            badge={tasks.length}
-          />
-          <M3Chip
-            label="TODAY"
-            selected={activeFilter === 'today'}
-            onPress={() => setActiveFilter('today')}
-            colorScheme="coral"
-            badge={tasks.filter((t) => (t.due_date || '').includes('Today')).length}
-          />
-          <M3Chip
-            label="UPCOMING"
-            selected={activeFilter === 'upcoming'}
-            onPress={() => setActiveFilter('upcoming')}
-            colorScheme="sky"
-          />
-          <M3Chip
-            label="DONE"
-            selected={activeFilter === 'completed'}
-            onPress={() => setActiveFilter('completed')}
-            colorScheme="mint"
-            badge={tasks.filter((t) => t.is_completed).length}
-          />
-        </ScrollView>
+      {/* Filter bar — text tabs, not chips */}
+      <View style={[styles.filterBar, { borderBottomColor: colors.border, backgroundColor: colors.background }]}>
+        {FILTERS.map(({ key, label }) => {
+          const count =
+            key === 'all' ? tasks.length
+            : key === 'today' ? tasks.filter((t) => (t.due_date || '').toLowerCase().includes('today')).length
+            : key === 'upcoming' ? tasks.filter((t) => !t.is_completed && !(t.due_date || '').toLowerCase().includes('today')).length
+            : tasks.filter((t) => t.is_completed).length;
+
+          return (
+            <Pressable
+              key={key}
+              onPress={() => { haptic.selection(); setFilter(key); }}
+              style={[
+                styles.filterTab,
+                filter === key && [styles.filterTabActive, { borderBottomColor: colors.accentYellow }],
+              ]}
+            >
+              <Text style={[
+                styles.filterTabText,
+                { color: filter === key ? colors.onBackground : isDark ? '#666' : '#999' },
+              ]}>
+                {label}
+              </Text>
+              {count > 0 && (
+                <View style={[styles.filterCount, {
+                  backgroundColor: filter === key ? colors.accentYellow : isDark ? '#333' : '#eee',
+                  borderColor: colors.border,
+                }]}>
+                  <Text style={[styles.filterCountText, { color: filter === key ? '#000' : isDark ? '#aaa' : '#666' }]}>
+                    {count}
+                  </Text>
+                </View>
+              )}
+            </Pressable>
+          );
+        })}
       </View>
 
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.base }]}
-        showsVerticalScrollIndicator={false}
+      <SectionList
+        sections={sections}
+        keyExtractor={(item) => item.id}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.accentYellow} />
         }
-      >
-        {filteredTasks.length === 0 ? (
-          <M3EmptyState
-            icon="checkbox-outline"
-            title="NO DELIVERABLES FOUND"
-            description="No items match your filter criteria. Capture a new task to keep your momentum high."
-            actionTitle="ADD NEW DELIVERABLE"
-            onAction={() => router.push('/modal')}
-          />
-        ) : (
-          filteredTasks.map((task) => (
-            <M3Card
-              key={task.id}
-              variant="elevated"
-              style={[
-                styles.taskCard,
-                task.is_completed && { opacity: 0.65 },
-              ]}
+        contentContainerStyle={[styles.listContent, { paddingBottom: 90 }]}
+        showsVerticalScrollIndicator={false}
+        stickySectionHeadersEnabled={false}
+        ListEmptyComponent={
+          <View style={styles.emptyWrap}>
+            <Text style={[styles.emptyTitle, { color: colors.onBackground }]}>Nothing here</Text>
+            <Text style={[styles.emptyNote, { color: isDark ? '#555' : '#bbb' }]}>
+              {filter === 'done' ? 'No completed tasks yet.' : 'Tap + to add a task.'}
+            </Text>
+          </View>
+        }
+        renderSectionHeader={({ section }) =>
+          section.title ? (
+            <View style={[styles.sectionHeader, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+              <View style={[styles.sectionHeaderPip, { backgroundColor: priorityColor(section.title.toLowerCase()) }]} />
+              <Text style={[styles.sectionHeaderText, { color: isDark ? '#888' : '#999' }]}>
+                {section.title}
+              </Text>
+              <Text style={[styles.sectionHeaderCount, { color: isDark ? '#555' : '#ccc' }]}>
+                {section.data.length}
+              </Text>
+            </View>
+          ) : null
+        }
+        renderItem={({ item: task, index, section }) => {
+          const isLast = index === section.data.length - 1;
+          return (
+            <Pressable
               onPress={() => setSelectedTask(task)}
+              style={[
+                styles.taskRow,
+                { borderBottomColor: isLast ? 'transparent' : colors.border },
+              ]}
             >
-              <View style={styles.taskCardRow}>
-                <Pressable
-                  onPress={() => handleToggle(task.id)}
+              {/* Priority stripe */}
+              <View style={[styles.priorityStripe, { backgroundColor: task.is_completed ? 'transparent' : priorityColor(task.priority) }]} />
+
+              {/* Checkbox */}
+              <Pressable
+                onPress={() => handleToggle(task.id)}
+                style={[
+                  styles.checkbox,
+                  { borderColor: colors.border, backgroundColor: task.is_completed ? colors.accentYellow : 'transparent' },
+                ]}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: task.is_completed }}
+              >
+                {task.is_completed && <Ionicons name="checkmark" size={14} color="#000" />}
+              </Pressable>
+
+              {/* Content */}
+              <View style={styles.taskContent}>
+                <Text
                   style={[
-                    styles.checkbox,
+                    styles.taskTitle,
                     {
-                      borderColor: '#000000',
-                      backgroundColor: task.is_completed ? colors.accentYellow : colors.surface,
+                      color: task.is_completed ? (isDark ? '#555' : '#bbb') : colors.onSurface,
+                      textDecorationLine: task.is_completed ? 'line-through' : 'none',
                     },
                   ]}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: task.is_completed }}
+                  numberOfLines={1}
                 >
-                  {task.is_completed && (
-                    <Ionicons name="checkmark" size={18} color="#000000" />
-                  )}
-                </Pressable>
-
-                <View style={styles.taskBody}>
-                  <Text
-                    style={[
-                      styles.taskTitle,
-                      {
-                        color: colors.onSurface,
-                        textDecorationLine: task.is_completed ? 'line-through' : 'none',
-                      },
-                    ]}
-                  >
-                    {task.title}
-                  </Text>
-
+                  {task.title}
+                </Text>
+                <View style={styles.taskMeta}>
                   {task.description ? (
-                    <Text
-                      style={[
-                        styles.taskDesc,
-                        { color: isDark ? '#A0A0A0' : '#555555' },
-                      ]}
-                      numberOfLines={2}
-                    >
+                    <Text style={[styles.taskDesc, { color: isDark ? '#666' : '#aaa' }]} numberOfLines={1}>
                       {task.description}
                     </Text>
                   ) : null}
-
-                  <View style={styles.taskTagsRow}>
-                    <View style={styles.categoryBadge}>
-                      <Text style={styles.categoryBadgeText}>
-                        {task.category.toUpperCase()}
-                      </Text>
-                    </View>
-
-                    <View
-                      style={[
-                        styles.priorityBadge,
-                        {
-                          backgroundColor:
-                            task.priority === 'high'
-                              ? colors.accentRed
-                              : task.priority === 'medium'
-                              ? colors.accentYellow
-                              : colors.accentSky,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.priorityText,
-                          { color: task.priority === 'high' ? '#FFFFFF' : '#000000' },
-                        ]}
-                      >
-                        {task.priority.toUpperCase()}
-                      </Text>
-                    </View>
-
-                    {task.due_date && (
-                      <View style={styles.dueBadge}>
-                        <Ionicons name="time-outline" size={12} color="#000000" />
-                        <Text style={styles.dueText}>{task.due_date}</Text>
-                      </View>
-                    )}
+                  <View style={styles.taskTags}>
+                    <Text style={[styles.categoryTag, { color: isDark ? '#777' : '#999' }]}>
+                      {task.category}
+                    </Text>
+                    {task.due_date ? (
+                      <>
+                        <Text style={[styles.dot, { color: isDark ? '#555' : '#ccc' }]}>·</Text>
+                        <Text style={[styles.dueTag, { color: isDark ? '#777' : '#999' }]}>
+                          {task.due_date}
+                        </Text>
+                      </>
+                    ) : null}
                   </View>
                 </View>
               </View>
-            </M3Card>
-          ))
-        )}
 
-        <View style={{ height: 100 }} />
-      </ScrollView>
-
-      {/* Floating Action Button */}
-      <M3FAB
-        onPress={() => {
-          haptic.medium();
-          router.push('/modal');
+              <Ionicons name="chevron-forward" size={14} color={isDark ? '#444' : '#ddd'} style={{ marginRight: 4 }} />
+            </Pressable>
+          );
         }}
+      />
+
+      <BrutalFAB
+        onPress={() => { haptic.medium(); router.push('/modal'); }}
         icon="add"
         style={styles.fab}
       />
 
-      {/* Task Detail Modal */}
       <TaskDetailModal
         visible={Boolean(selectedTask)}
         task={selectedTask}
@@ -257,7 +251,6 @@ export default function TasksScreen() {
         onUpdated={loadTasks}
       />
 
-      {/* Global Search Modal */}
       <GlobalSearchModal
         visible={searchVisible}
         onClose={() => setSearchVisible(false)}
@@ -267,122 +260,68 @@ export default function TasksScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1 },
+
+  searchBtn: {
+    width: 38, height: 38, borderWidth: 2, borderRadius: 8,
+    alignItems: 'center', justifyContent: 'center',
+    shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0, elevation: 2,
   },
-  searchHeaderBtn: {
-    width: 38,
-    height: 38,
-    borderWidth: 2,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
-  },
-  filterStrip: {
-    paddingVertical: 10,
+
+  // Filter bar — text tabs not chips
+  filterBar: {
+    flexDirection: 'row',
     borderBottomWidth: 2.5,
-  },
-  filterScroll: {
     paddingHorizontal: 16,
-    gap: 8,
   },
-  scrollContent: {
-    paddingTop: 16,
-    paddingBottom: 24,
+  filterTab: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 11, gap: 5, borderBottomWidth: 3, borderBottomColor: 'transparent',
   },
-  taskCard: {
-    marginBottom: 12,
+  filterTabActive: { borderBottomWidth: 3 },
+  filterTabText: { fontFamily: 'SpaceMono', fontSize: 10, fontWeight: '700' },
+  filterCount: {
+    borderWidth: 1, borderRadius: 4,
+    paddingHorizontal: 4, paddingVertical: 0, minWidth: 16, alignItems: 'center',
   },
-  taskCardRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+  filterCountText: { fontFamily: 'SpaceMono', fontSize: 9, fontWeight: '700' },
+
+  listContent: { paddingTop: 0 },
+
+  // Section headers
+  sectionHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 16, paddingVertical: 8,
+    borderBottomWidth: 1,
   },
+  sectionHeaderPip: { width: 8, height: 8, borderRadius: 2 },
+  sectionHeaderText: { fontFamily: 'SpaceMono', fontSize: 10, fontWeight: '700', flex: 1, letterSpacing: 0.5 },
+  sectionHeaderCount: { fontFamily: 'SpaceMono', fontSize: 10, fontWeight: '700' },
+
+  // Task rows — flat list style with priority stripe, no card borders
+  taskRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 13, paddingRight: 12,
+    borderBottomWidth: 1,
+  },
+  priorityStripe: { width: 3, alignSelf: 'stretch', marginRight: 12, borderRadius: 2 },
   checkbox: {
-    width: 26,
-    height: 26,
-    borderWidth: 2.5,
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-    marginTop: 2,
-    shadowColor: '#000000',
-    shadowOffset: { width: 1.5, height: 1.5 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
+    width: 22, height: 22, borderWidth: 2, borderRadius: 4,
+    alignItems: 'center', justifyContent: 'center', marginRight: 12, flexShrink: 0,
   },
-  taskBody: {
-    flex: 1,
-  },
-  taskTitle: {
-    fontFamily: 'SpaceMono',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  taskDesc: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginTop: 4,
-    lineHeight: 16,
-  },
-  taskTagsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 8,
-  },
-  categoryBadge: {
-    borderWidth: 1.5,
-    borderColor: '#000000',
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    backgroundColor: '#FFFFFF',
-  },
-  categoryBadgeText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#000000',
-  },
-  priorityBadge: {
-    borderWidth: 1.5,
-    borderColor: '#000000',
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  priorityText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 9,
-    fontWeight: '700',
-  },
-  dueBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#000000',
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    backgroundColor: '#FFFFFF',
-    gap: 4,
-  },
-  dueText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#000000',
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 24,
-    right: 20,
-  },
+  taskContent: { flex: 1, minWidth: 0 },
+  taskTitle: { fontSize: 15, fontWeight: '600', marginBottom: 3 },
+  taskMeta: { gap: 2 },
+  taskDesc: { fontSize: 12, lineHeight: 16 },
+  taskTags: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  categoryTag: { fontSize: 11 },
+  dot: { fontSize: 11 },
+  dueTag: { fontSize: 11 },
+
+  // Empty state
+  emptyWrap: { paddingTop: 60, alignItems: 'center', paddingHorizontal: 32 },
+  emptyTitle: { fontFamily: 'SpaceMono', fontSize: 16, fontWeight: '700', marginBottom: 8 },
+  emptyNote: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
+
+  fab: { position: 'absolute', bottom: 24, right: 20 },
 });

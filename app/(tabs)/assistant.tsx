@@ -1,269 +1,255 @@
-import React, { useState } from 'react';
-import {
-  ScrollView,
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  Pressable,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useAppTheme } from '@/src/design-system/ThemeContext';
-import { M3Header } from '@/src/components/ui/M3Header';
-import { M3Card } from '@/src/components/ui/M3Card';
-import { M3Button } from '@/src/components/ui/M3Button';
-import { M3Chip } from '@/src/components/ui/M3Chip';
 import { haptic } from '@/src/design-system/haptics';
-import { AIAssistantService, ProposedAIAction, AssistantMessage } from '@/src/services/AIAssistantService';
+import { useAppTheme } from '@/src/design-system/ThemeContext';
+import { AIAssistantService, AssistantMessage, ProposedAIAction } from '@/src/services/AIAssistantService';
+import { Ionicons } from '@expo/vector-icons';
+import { useCallback, useRef, useState } from 'react';
+import {
+    FlatList,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Prompt suggestions — short enough to read at a glance
+const PROMPTS = [
+  'Spent $45 on groceries',
+  'Urgent task: DB indexing',
+  'Track habit: Deep Work',
+  'Note: architecture idea',
+  'Remind me: call accountant',
+];
 
 export default function AssistantScreen() {
-  const { colors, spacing, isDark } = useAppTheme();
-  const [inputText, setInputText] = useState('');
+  const { colors, isDark } = useAppTheme();
+  const insets = useSafeAreaInsets();
+  const [input, setInput] = useState('');
   const [messages, setMessages] = useState<AssistantMessage[]>([
     {
-      id: 'msg-init',
+      id: 'init',
       sender: 'assistant',
-      text: 'Hello Mr Q! I am your LifeOS offline workspace assistant. Command me to schedule tasks, track habit routines, log expenses, or organize your day.',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      text: 'Ready. Tell me what to log, schedule, or track.',
+      timestamp: now(),
     },
   ]);
-  const [activeAction, setActiveAction] = useState<ProposedAIAction | null>(null);
+  const [pendingAction, setPendingAction] = useState<ProposedAIAction | null>(null);
+  const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
+  const listRef = useRef<FlatList>(null);
 
-  const promptSuggestions = [
-    'Remind me to call accountant tomorrow at 9 AM',
-    'Spent $45 on groceries',
-    'Urgent task: review database index',
-    'Track habit: Morning Deep Work',
-    'Note: LifeOS Neo-Brutalism architecture',
-  ];
+  const shadowColor = isDark ? '#FFFFFF' : '#000000';
 
-  const handleSend = () => {
-    if (!inputText.trim()) return;
+  function now() {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  const send = useCallback((text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
     haptic.medium();
+    setInput('');
 
-    const userText = inputText.trim();
-    setInputText('');
-
-    const newMsg: AssistantMessage = {
-      id: `usr_${Date.now()}`,
+    const userMsg: AssistantMessage = {
+      id: `u_${Date.now()}`,
       sender: 'user',
-      text: userText,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      text: trimmed,
+      timestamp: now(),
     };
 
-    const result = AIAssistantService.parseUserInput(userText);
-
+    const result = AIAssistantService.parseUserInput(trimmed);
     const assistantMsg: AssistantMessage = {
-      id: `ast_${Date.now()}`,
+      id: `a_${Date.now()}`,
       sender: 'assistant',
       text: result.responseText,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: now(),
       action: result.action,
     };
 
-    setMessages((prev) => [...prev, newMsg, assistantMsg]);
-    if (result.action) {
-      setActiveAction(result.action);
-    }
-  };
+    setMessages((prev) => [...prev, userMsg, assistantMsg]);
+    if (result.action) setPendingAction(result.action);
 
-  const handleConfirmAction = async () => {
-    if (!activeAction) return;
+    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80);
+  }, []);
+
+  const confirmAction = async () => {
+    if (!pendingAction) return;
     haptic.success();
-    await AIAssistantService.applyAction(activeAction);
-    setActiveAction({ ...activeAction, status: 'applied' });
+    await AIAssistantService.applyAction(pendingAction);
+    setAppliedIds((prev) => new Set(prev).add(pendingAction.id));
+    setPendingAction(null);
   };
 
-  const handleCancelAction = () => {
+  const dismissAction = () => {
     haptic.light();
-    setActiveAction(null);
+    setPendingAction(null);
   };
 
-  const shadowColor = isDark ? '#FFFFFF' : '#000000';
+  // ── render helpers ─────────────────────────────────────────────────────────
+
+  const renderEntry = ({ item: msg }: { item: AssistantMessage }) => {
+    const isUser = msg.sender === 'user';
+
+    return (
+      <View
+        style={[
+          styles.entry,
+          {
+            borderLeftColor: isUser ? colors.accentYellow : isDark ? '#333' : '#e8e8e8',
+            backgroundColor: isUser
+              ? isDark ? '#1f1a00' : '#fffde6'
+              : colors.background,
+          },
+        ]}
+      >
+        <View style={styles.entryHeader}>
+          <Text style={[styles.entrySender, { color: isUser ? colors.accentYellow : isDark ? '#555' : '#ccc' }]}>
+            {isUser ? '> YOU' : '~ BOT'}
+          </Text>
+          <Text style={[styles.entryTime, { color: isDark ? '#444' : '#ccc' }]}>{msg.timestamp}</Text>
+        </View>
+        <Text style={[styles.entryText, { color: colors.onBackground }]}>{msg.text}</Text>
+
+        {/* Inline applied indicator */}
+        {msg.action && appliedIds.has(msg.action.id) && (
+          <View style={[styles.appliedTag, { backgroundColor: colors.accentMint, borderColor: colors.border }]}>
+            <Ionicons name="checkmark" size={11} color="#000" />
+            <Text style={styles.appliedTagText}>SAVED</Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  // ── main render ────────────────────────────────────────────────────────────
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <M3Header
-        badge="NEO-BRUTALIST • AI COMPANION"
-        title="AI Assistant"
-        subtitle="Safe, offline heuristic natural-language partner"
-      />
-
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.base }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Chat Stream */}
-        {messages.map((msg) => (
-          <View
-            key={msg.id}
-            style={[
-              styles.messageRow,
-              msg.sender === 'user' ? styles.userRow : styles.assistantRow,
-            ]}
-          >
-            {msg.sender === 'assistant' && (
-              <View
-                style={[
-                  styles.avatarBox,
-                  { backgroundColor: colors.accentYellow, borderColor: colors.border },
-                ]}
-              >
-                <Ionicons name="sparkles" size={14} color="#000000" />
-              </View>
-            )}
-            <View
-              style={[
-                styles.bubble,
-                {
-                  backgroundColor: msg.sender === 'user' ? colors.accentYellow : colors.surface,
-                  borderColor: colors.border,
-                  shadowColor,
-                },
-              ]}
-            >
-              <Text style={styles.bubbleText}>
-                {msg.text}
-              </Text>
-              <Text style={styles.timestampText}>{msg.timestamp}</Text>
-            </View>
-          </View>
-        ))}
-
-        {/* Action Safety Preview Card */}
-        {activeAction && (
-          <M3Card
-            variant="lilac"
-            style={[
-              styles.actionCard,
-              {
-                borderColor: activeAction.status === 'applied' ? colors.accentJade : colors.border,
-              },
-            ]}
-          >
-            <View style={styles.actionHeader}>
-              <View
-                style={[
-                  styles.actionBadge,
-                  {
-                    backgroundColor:
-                      activeAction.status === 'applied'
-                        ? colors.accentJade
-                        : colors.accentYellow,
-                  },
-                ]}
-              >
-                <Ionicons
-                  name={activeAction.status === 'applied' ? 'checkmark-circle' : 'shield-checkmark'}
-                  size={14}
-                  color="#000000"
-                />
-                <Text style={styles.actionBadgeText}>
-                  {activeAction.status === 'applied' ? 'SAVED TO SQLITE' : 'PROPOSED ACTION'}
-                </Text>
-              </View>
-            </View>
-
-            <Text style={styles.actionTitle}>
-              {activeAction.title}
-            </Text>
-            <Text style={styles.actionDetails}>
-              {activeAction.details}
-            </Text>
-
-            {activeAction.status === 'pending' ? (
-              <View style={styles.actionButtonsRow}>
-                <M3Button
-                  title="CONFIRM & APPLY"
-                  onPress={handleConfirmAction}
-                  variant="filled"
-                  size="small"
-                  style={{ flex: 1 }}
-                />
-                <M3Button
-                  title="CANCEL"
-                  onPress={handleCancelAction}
-                  variant="tonal"
-                  size="small"
-                  style={{ flex: 1 }}
-                />
-              </View>
-            ) : (
-              <View style={styles.appliedBanner}>
-                <Ionicons name="checkmark-done" size={16} color="#000000" />
-                <Text style={styles.appliedBannerText}>ACTION COMMITTED TO LOCAL DATABASE</Text>
-              </View>
-            )}
-          </M3Card>
-        )}
-
-        {/* Quick Suggestion Chips */}
-        <View style={styles.suggestionsContainer}>
-          <Text style={styles.suggestionTitle}>
-            EXAMPLE COMMANDS:
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestionScroll}>
-            {promptSuggestions.map((prompt, idx) => (
-              <M3Chip
-                key={idx}
-                label={prompt}
-                onPress={() => {
-                  haptic.selection();
-                  setInputText(prompt);
-                }}
-                colorScheme="yellow"
-              />
-            ))}
-          </ScrollView>
-        </View>
-
-        <View style={{ height: 90 }} />
-      </ScrollView>
-
-      {/* Input Box Bar */}
+      {/* Header — minimal, inline */}
       <View
         style={[
-          styles.inputContainer,
+          styles.header,
           {
-            backgroundColor: colors.surface,
-            borderTopColor: colors.border,
+            paddingTop: Math.max(insets.top, 12) + 4,
+            borderBottomColor: colors.border,
+            backgroundColor: colors.background,
           },
         ]}
       >
-        <TextInput
-          value={inputText}
-          onChangeText={setInputText}
-          placeholder="Command LifeOS..."
-          placeholderTextColor="#888888"
+        <View style={styles.headerLeft}>
+          <View style={[styles.headerDot, { backgroundColor: colors.accentYellow, borderColor: colors.border }]} />
+          <Text style={[styles.headerTitle, { color: colors.onBackground }]}>AI BOT</Text>
+          <Text style={[styles.headerSub, { color: isDark ? '#555' : '#bbb' }]}>offline · no api · on-device</Text>
+        </View>
+        <View style={[styles.headerBadge, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}>
+          <Text style={[styles.headerBadgeText, { color: isDark ? '#888' : '#999' }]}>HEURISTIC</Text>
+        </View>
+      </View>
+
+      {/* Message log */}
+      <FlatList
+        ref={listRef}
+        data={messages}
+        keyExtractor={(m) => m.id}
+        renderItem={renderEntry}
+        contentContainerStyle={styles.log}
+        showsVerticalScrollIndicator={false}
+        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+      />
+
+      {/* Pending action confirmation strip */}
+      {pendingAction && (
+        <View
           style={[
-            styles.textInput,
-            {
-              backgroundColor: colors.background,
-              borderColor: colors.border,
-              color: colors.onBackground,
-            },
+            styles.actionStrip,
+            { backgroundColor: colors.accentLilac, borderTopColor: colors.border, borderBottomColor: colors.border },
           ]}
-          onSubmitEditing={handleSend}
+        >
+          <View style={styles.actionStripLeft}>
+            <Text style={styles.actionStripType}>{pendingAction.type.replace('_', ' ').toUpperCase()}</Text>
+            <Text style={styles.actionStripTitle} numberOfLines={1}>{pendingAction.title.replace(/^[^:]+:\s*/, '')}</Text>
+            <Text style={styles.actionStripDetail} numberOfLines={1}>{pendingAction.details}</Text>
+          </View>
+          <View style={styles.actionStripBtns}>
+            <Pressable
+              onPress={confirmAction}
+              style={[styles.actionBtn, styles.actionBtnConfirm, { borderColor: colors.border, shadowColor }]}
+            >
+              <Ionicons name="checkmark" size={16} color="#000" />
+            </Pressable>
+            <Pressable
+              onPress={dismissAction}
+              style={[styles.actionBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            >
+              <Ionicons name="close" size={16} color={isDark ? '#888' : '#999'} />
+            </Pressable>
+          </View>
+        </View>
+      )}
+
+      {/* Prompt suggestions — single scrollable row, only shown when input empty */}
+      {!input && (
+        <View style={[styles.promptsRow, { borderTopColor: isDark ? '#222' : '#f0f0f0' }]}>
+          <FlatList
+            data={PROMPTS}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(p) => p}
+            contentContainerStyle={styles.promptsContent}
+            renderItem={({ item }) => (
+              <Pressable
+                onPress={() => { haptic.selection(); setInput(item); }}
+                style={[styles.promptChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              >
+                <Text style={[styles.promptChipText, { color: isDark ? '#888' : '#999' }]}>{item}</Text>
+              </Pressable>
+            )}
+          />
+        </View>
+      )}
+
+      {/* Input bar — command prompt style */}
+      <View
+        style={[
+          styles.inputBar,
+          {
+            backgroundColor: colors.surface,
+            borderTopColor: colors.border,
+            paddingBottom: Math.max(insets.bottom, 12),
+          },
+        ]}
+      >
+        <Text style={[styles.prompt, { color: colors.accentYellow }]}>{'>'}</Text>
+        <TextInput
+          value={input}
+          onChangeText={setInput}
+          placeholder="type a command..."
+          placeholderTextColor={isDark ? '#444' : '#ccc'}
+          style={[styles.input, { color: colors.onSurface }]}
+          onSubmitEditing={() => send(input)}
+          returnKeyType="send"
+          blurOnSubmit={false}
         />
         <Pressable
-          onPress={handleSend}
+          onPress={() => send(input)}
+          disabled={!input.trim()}
           style={[
-            styles.sendButton,
+            styles.sendBtn,
             {
-              backgroundColor: colors.accentYellow,
+              backgroundColor: input.trim() ? colors.accentYellow : isDark ? '#222' : '#f5f5f5',
               borderColor: colors.border,
-              shadowColor,
+              shadowColor: input.trim() ? shadowColor : 'transparent',
             },
           ]}
           accessibilityRole="button"
-          accessibilityLabel="Send command"
+          accessibilityLabel="Send"
         >
-          <Ionicons name="arrow-up" size={20} color="#000000" />
+          <Ionicons name="return-down-back" size={18} color={input.trim() ? '#000' : isDark ? '#444' : '#ccc'} />
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -271,159 +257,80 @@ export default function AssistantScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1 },
+
+  // Header
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 2.5,
   },
-  scrollContent: {
-    paddingTop: 16,
-    paddingBottom: 24,
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headerDot: { width: 10, height: 10, borderRadius: 3, borderWidth: 2 },
+  headerTitle: { fontFamily: 'SpaceMono', fontSize: 16, fontWeight: '900' },
+  headerSub: { fontSize: 12 },
+  headerBadge: { borderWidth: 1.5, borderRadius: 4, paddingHorizontal: 7, paddingVertical: 2 },
+  headerBadgeText: { fontFamily: 'SpaceMono', fontSize: 9, fontWeight: '700', letterSpacing: 0.5 },
+
+  // Log
+  log: { paddingBottom: 8 },
+
+  // Entry (terminal log style)
+  entry: {
+    borderLeftWidth: 3,
+    paddingLeft: 14, paddingRight: 16, paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  messageRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+  entryHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+  entrySender: { fontFamily: 'SpaceMono', fontSize: 9, fontWeight: '700', letterSpacing: 0.8 },
+  entryTime: { fontFamily: 'SpaceMono', fontSize: 9 },
+  entryText: { fontSize: 14, lineHeight: 20 },
+  appliedTag: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    alignSelf: 'flex-start', borderWidth: 1.5, borderRadius: 4,
+    paddingHorizontal: 6, paddingVertical: 2, marginTop: 8,
   },
-  userRow: {
-    justifyContent: 'flex-end',
+  appliedTagText: { fontFamily: 'SpaceMono', fontSize: 9, fontWeight: '700', color: '#000' },
+
+  // Action confirmation strip
+  actionStrip: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 10,
+    borderTopWidth: 2.5, borderBottomWidth: 2.5, gap: 12,
   },
-  assistantRow: {
-    justifyContent: 'flex-start',
+  actionStripLeft: { flex: 1, minWidth: 0 },
+  actionStripType: { fontFamily: 'SpaceMono', fontSize: 9, fontWeight: '700', color: '#000', letterSpacing: 0.5 },
+  actionStripTitle: { fontSize: 14, fontWeight: '600', color: '#000', marginTop: 2 },
+  actionStripDetail: { fontSize: 12, color: '#333', marginTop: 1 },
+  actionStripBtns: { flexDirection: 'row', gap: 8 },
+  actionBtn: {
+    width: 36, height: 36, borderWidth: 2, borderRadius: 6,
+    alignItems: 'center', justifyContent: 'center',
   },
-  avatarBox: {
-    width: 28,
-    height: 28,
-    borderWidth: 2,
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-    marginTop: 2,
+  actionBtnConfirm: {
+    backgroundColor: '#FFE500',
+    shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0, elevation: 2,
   },
-  bubble: {
-    maxWidth: '82%',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderWidth: 2,
-    borderRadius: 8,
-    shadowOffset: { width: 3, height: 3 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 3,
+
+  // Prompt suggestions
+  promptsRow: { borderTopWidth: 1 },
+  promptsContent: { paddingHorizontal: 16, paddingVertical: 8, gap: 8 },
+  promptChip: {
+    borderWidth: 1.5, borderRadius: 6,
+    paddingHorizontal: 10, paddingVertical: 6,
   },
-  bubbleText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#000000',
-    lineHeight: 18,
+  promptChipText: { fontSize: 12 },
+
+  // Input bar
+  inputBar: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 16, paddingTop: 12,
+    borderTopWidth: 2.5, gap: 10,
   },
-  timestampText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 9,
-    color: '#555555',
-    marginTop: 4,
-    alignSelf: 'flex-end',
-  },
-  actionCard: {
-    marginVertical: 12,
-  },
-  actionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  actionBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#000000',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    gap: 4,
-  },
-  actionBadgeText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#000000',
-  },
-  actionTitle: {
-    fontFamily: 'SpaceMono',
-    fontSize: 15,
-    fontWeight: '900',
-    color: '#000000',
-    marginTop: 8,
-  },
-  actionDetails: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#222222',
-    marginTop: 4,
-    lineHeight: 16,
-  },
-  actionButtonsRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 12,
-  },
-  appliedBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#70E4BA',
-    borderWidth: 1.5,
-    borderColor: '#000000',
-    borderRadius: 4,
-    padding: 8,
-    marginTop: 12,
-    gap: 6,
-  },
-  appliedBannerText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#000000',
-  },
-  suggestionsContainer: {
-    marginTop: 16,
-  },
-  suggestionTitle: {
-    fontFamily: 'SpaceMono',
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#000000',
-    marginBottom: 8,
-  },
-  suggestionScroll: {
-    gap: 8,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 2.5,
-  },
-  textInput: {
-    flex: 1,
-    height: 48,
-    borderWidth: 2,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
-  },
-  sendButton: {
-    width: 48,
-    height: 48,
-    borderWidth: 2,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 10,
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 3,
+  prompt: { fontFamily: 'SpaceMono', fontSize: 18, fontWeight: '900' },
+  input: { flex: 1, fontSize: 15, paddingVertical: 4 },
+  sendBtn: {
+    width: 40, height: 40, borderWidth: 2, borderRadius: 8,
+    alignItems: 'center', justifyContent: 'center',
+    shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0, elevation: 2,
   },
 });

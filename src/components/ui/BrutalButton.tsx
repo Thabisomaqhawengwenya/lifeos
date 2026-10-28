@@ -1,27 +1,28 @@
-import React from 'react';
-import {
-  Pressable,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  ViewStyle,
-  TextStyle,
-  StyleProp,
-  View,
-} from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-} from 'react-native-reanimated';
+/* eslint-disable react-hooks/immutability */
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { haptic } from '@/src/design-system/haptics';
+import React from 'react';
+import {
+    ActivityIndicator,
+    Pressable,
+    StyleProp,
+    StyleSheet,
+    Text,
+    TextStyle,
+    View,
+    ViewStyle,
+} from 'react-native';
+import Animated, {
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
+} from 'react-native-reanimated';
 
 type ButtonVariant = 'filled' | 'tonal' | 'outlined' | 'destructive' | 'text';
 type ButtonSize = 'small' | 'medium' | 'large';
 
-interface M3ButtonProps {
+interface BrutalButtonProps {
   title: string;
   onPress: () => void;
   variant?: ButtonVariant;
@@ -36,7 +37,7 @@ interface M3ButtonProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function M3Button({
+export function BrutalButton({
   title,
   onPress,
   variant = 'filled',
@@ -47,7 +48,7 @@ export function M3Button({
   style,
   textStyle,
   pill = false,
-}: M3ButtonProps) {
+}: BrutalButtonProps) {
   const { colors, radii, spacing, isDark } = useAppTheme();
   const pressedX = useSharedValue(0);
   const pressedY = useSharedValue(0);

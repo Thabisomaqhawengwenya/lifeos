@@ -1,21 +1,21 @@
-import React from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  ViewStyle,
-  StyleProp,
-} from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-} from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+/* eslint-disable react-hooks/immutability */
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { haptic } from '@/src/design-system/haptics';
+import { Ionicons } from '@expo/vector-icons';
+import {
+    Pressable,
+    StyleProp,
+    StyleSheet,
+    ViewStyle,
+} from 'react-native';
+import Animated, {
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
+} from 'react-native-reanimated';
 
-interface M3FABProps {
+interface BrutalFABProps {
   onPress: () => void;
   icon?: keyof typeof Ionicons.glyphMap;
   style?: StyleProp<ViewStyle>;
@@ -24,12 +24,12 @@ interface M3FABProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function M3FAB({
+export function BrutalFAB({
   onPress,
   icon = 'add',
   style,
   accessibilityLabel = 'Create new item',
-}: M3FABProps) {
+}: BrutalFABProps) {
   const { colors, radii, isDark } = useAppTheme();
   const pressedX = useSharedValue(0);
   const pressedY = useSharedValue(0);

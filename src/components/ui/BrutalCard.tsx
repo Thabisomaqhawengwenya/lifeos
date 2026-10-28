@@ -1,23 +1,24 @@
-import React from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  View,
-  ViewStyle,
-  StyleProp,
-} from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-} from 'react-native-reanimated';
+/* eslint-disable react-hooks/immutability */
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { haptic } from '@/src/design-system/haptics';
+import React from 'react';
+import {
+    Pressable,
+    StyleProp,
+    StyleSheet,
+    View,
+    ViewStyle,
+} from 'react-native';
+import Animated, {
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
+} from 'react-native-reanimated';
 
 type CardVariant = 'elevated' | 'filled' | 'outlined' | 'yellow' | 'coral' | 'mint' | 'lilac';
 
-interface M3CardProps {
+interface BrutalCardProps {
   children: React.ReactNode;
   onPress?: () => void;
   variant?: CardVariant;
@@ -27,13 +28,13 @@ interface M3CardProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function M3Card({
+export function BrutalCard({
   children,
   onPress,
   variant = 'elevated',
   style,
   padding,
-}: M3CardProps) {
+}: BrutalCardProps) {
   const { colors, radii, spacing, isDark } = useAppTheme();
   const pressedX = useSharedValue(0);
   const pressedY = useSharedValue(0);

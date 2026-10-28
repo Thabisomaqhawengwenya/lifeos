@@ -1,10 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { BrutalButton } from '@/src/components/ui/BrutalButton';
 import { useAppTheme } from '@/src/design-system/ThemeContext';
-import { M3Button } from './M3Button';
+import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet, Text, View } from 'react-native';
 
-interface M3EmptyStateProps {
+interface BrutalEmptyProps {
   icon?: keyof typeof Ionicons.glyphMap;
   title: string;
   description: string;
@@ -12,13 +11,13 @@ interface M3EmptyStateProps {
   onAction?: () => void;
 }
 
-export function M3EmptyState({
+export function BrutalEmpty({
   icon = 'leaf-outline',
   title,
   description,
   actionTitle,
   onAction,
-}: M3EmptyStateProps) {
+}: BrutalEmptyProps) {
   const { colors, spacing, isDark } = useAppTheme();
 
   return (
@@ -58,7 +57,7 @@ export function M3EmptyState({
         {description}
       </Text>
       {actionTitle && onAction && (
-        <M3Button
+        <BrutalButton
           title={actionTitle}
           onPress={onAction}
           variant="filled"
@@ -105,10 +104,9 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   description: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 13,
     textAlign: 'center',
     maxWidth: 280,
-    lineHeight: 18,
+    lineHeight: 19,
   },
 });

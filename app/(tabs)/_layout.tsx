@@ -1,9 +1,8 @@
-import React from 'react';
-import { Tabs } from 'expo-router';
-import { Platform, View, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { haptic } from '@/src/design-system/haptics';
+import { Ionicons } from '@expo/vector-icons';
+import { Tabs } from 'expo-router';
+import { Platform, StyleSheet, View } from 'react-native';
 
 export default function TabLayout() {
   const { colors, isDark } = useAppTheme();
@@ -47,8 +46,8 @@ export default function TabLayout() {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 3,
-          height: Platform.OS === 'ios' ? 88 : 72,
-          paddingBottom: Platform.OS === 'ios' ? 26 : 10,
+          height: Platform.OS === 'ios' ? 83 : 60,
+          paddingBottom: Platform.OS === 'ios' ? 22 : 8,
           paddingTop: 6,
           elevation: 8,
           shadowColor: '#000000',
