@@ -1,22 +1,23 @@
-import React from 'react';
-import {
-  Pressable,
-  Text,
-  StyleSheet,
-  ViewStyle,
-  StyleProp,
-  View,
-} from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-} from 'react-native-reanimated';
+/* eslint-disable react-hooks/immutability */
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { haptic } from '@/src/design-system/haptics';
+import React from 'react';
+import {
+    Pressable,
+    StyleProp,
+    StyleSheet,
+    Text,
+    View,
+    ViewStyle,
+} from 'react-native';
+import Animated, {
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
+} from 'react-native-reanimated';
 
-interface M3ChipProps {
+interface BrutalChipProps {
   label: string;
   selected?: boolean;
   onPress: () => void;
@@ -28,7 +29,7 @@ interface M3ChipProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function M3Chip({
+export function BrutalChip({
   label,
   selected = false,
   onPress,
@@ -36,7 +37,7 @@ export function M3Chip({
   badge,
   style,
   colorScheme = 'yellow',
-}: M3ChipProps) {
+}: BrutalChipProps) {
   const { colors, radii, spacing, isDark } = useAppTheme();
   const pressedX = useSharedValue(0);
   const pressedY = useSharedValue(0);

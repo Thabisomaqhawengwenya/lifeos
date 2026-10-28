@@ -76,6 +76,15 @@ export class NoteRepository {
     return Boolean(newPinned);
   }
 
+  static async updateNote(id: string, data: { title: string; content: string; tags?: string }): Promise<void> {
+    const db = await getDatabase();
+    const now = new Date().toISOString();
+    await db.runAsync(
+      `UPDATE notes SET title = ?, content = ?, tags = ?, updated_at = ? WHERE id = ?`,
+      [data.title, data.content, data.tags || null, now, id]
+    );
+  }
+
   static async deleteNote(id: string): Promise<void> {
     const db = await getDatabase();
     await db.runAsync(`DELETE FROM notes WHERE id = ?`, [id]);

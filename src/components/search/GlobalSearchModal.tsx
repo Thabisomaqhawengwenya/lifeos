@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  Pressable,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useAppTheme } from '@/src/design-system/ThemeContext';
-import { M3Card } from '@/src/components/ui/M3Card';
+import { BrutalCard } from '@/src/components/ui/BrutalCard';
 import { haptic } from '@/src/design-system/haptics';
+import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { SearchRepository, SearchResultItem } from '@/src/repositories/SearchRepository';
+import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
+import {
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
+} from 'react-native';
 
 interface GlobalSearchModalProps {
   visible: boolean;
@@ -140,13 +140,13 @@ export function GlobalSearchModal({
                   NO MATCHES FOUND
                 </Text>
                 <Text style={[styles.emptySub, { color: isDark ? '#A0A0A0' : '#555555' }]}>
-                  No items matched "{query}" across your SQLite database.
+                  No items matched &quot;{query}&quot; across your SQLite database.
                 </Text>
               </View>
             ) : null}
 
             {results.map((item) => (
-              <M3Card
+              <BrutalCard
                 key={`${item.type}_${item.id}`}
                 variant="elevated"
                 style={styles.resultCard}
@@ -185,7 +185,7 @@ export function GlobalSearchModal({
                     <Text style={styles.typeBadgeText}>{item.type.toUpperCase()}</Text>
                   </View>
                 </View>
-              </M3Card>
+              </BrutalCard>
             ))}
           </ScrollView>
         </View>
@@ -227,8 +227,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     paddingHorizontal: 10,
-    fontFamily: 'SpaceMono',
-    fontSize: 12,
+    fontSize: 14,
   },
   clearBtn: {
     padding: 8,
@@ -264,8 +263,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   emptySub: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 13,
     marginTop: 4,
     textAlign: 'center',
   },
@@ -289,13 +287,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   itemTitle: {
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '600',
   },
   itemSub: {
-    fontSize: 11,
-    fontWeight: '500',
+    fontSize: 12,
     marginTop: 2,
   },
   typeBadge: {

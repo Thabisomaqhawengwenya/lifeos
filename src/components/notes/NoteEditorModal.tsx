@@ -1,20 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  Pressable,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useAppTheme } from '@/src/design-system/ThemeContext';
-import { M3Button } from '@/src/components/ui/M3Button';
+/* eslint-disable react-hooks/set-state-in-effect */
+import { BrutalButton } from '@/src/components/ui/BrutalButton';
 import { haptic } from '@/src/design-system/haptics';
-import { NoteRepository, NoteItem } from '@/src/repositories/NoteAndGoalRepository';
+import { useAppTheme } from '@/src/design-system/ThemeContext';
+import { NoteItem, NoteRepository } from '@/src/repositories/NoteAndGoalRepository';
+import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useState } from 'react';
+import {
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
+} from 'react-native';
 
 interface NoteEditorModalProps {
   visible: boolean;
@@ -54,8 +55,7 @@ export function NoteEditorModal({
 
     const noteTitle = title.trim() || content.trim().slice(0, 30);
     if (note) {
-      await NoteRepository.deleteNote(note.id);
-      await NoteRepository.createNote({
+      await NoteRepository.updateNote(note.id, {
         title: noteTitle,
         content: content.trim(),
         tags: tags.trim() || undefined,
@@ -182,7 +182,7 @@ export function NoteEditorModal({
 
             {/* Actions */}
             <View style={styles.actionsContainer}>
-              <M3Button
+              <BrutalButton
                 title={isSaving ? 'SAVING...' : 'SAVE NOTE'}
                 onPress={handleSave}
                 variant="filled"
@@ -190,7 +190,7 @@ export function NoteEditorModal({
                 loading={isSaving}
               />
               {note && (
-                <M3Button
+                <BrutalButton
                   title="DELETE NOTE"
                   onPress={handleDelete}
                   variant="destructive"
@@ -273,8 +273,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 8,
     paddingHorizontal: 14,
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
+    fontSize: 15,
   },
   textArea: {
     minHeight: 120,
@@ -282,8 +281,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
+    fontSize: 14,
     textAlignVertical: 'top',
   },
   actionsContainer: {

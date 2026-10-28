@@ -1,20 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  Pressable,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useAppTheme } from '@/src/design-system/ThemeContext';
-import { M3Button } from '@/src/components/ui/M3Button';
+/* eslint-disable react-hooks/set-state-in-effect, react-hooks/immutability */
+import { BrutalButton } from '@/src/components/ui/BrutalButton';
 import { haptic } from '@/src/design-system/haptics';
-import { TaskRepository, TaskItem, SubtaskItem } from '@/src/repositories/TaskRepository';
+import { useAppTheme } from '@/src/design-system/ThemeContext';
+import { SubtaskItem, TaskItem, TaskRepository } from '@/src/repositories/TaskRepository';
+import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useState } from 'react';
+import {
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
+} from 'react-native';
 
 interface TaskDetailModalProps {
   visible: boolean;
@@ -29,7 +30,7 @@ export function TaskDetailModal({
   onClose,
   onUpdated,
 }: TaskDetailModalProps) {
-  const { colors, spacing, radii, isDark } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
@@ -322,14 +323,14 @@ export function TaskDetailModal({
 
             {/* Actions */}
             <View style={styles.actionsContainer}>
-              <M3Button
+              <BrutalButton
                 title={isSaving ? 'SAVING...' : 'SAVE CHANGES'}
                 onPress={handleSave}
                 variant="filled"
                 size="medium"
                 loading={isSaving}
               />
-              <M3Button
+              <BrutalButton
                 title="DELETE DELIVERABLE"
                 onPress={handleDeleteTask}
                 variant="destructive"
@@ -411,8 +412,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 8,
     paddingHorizontal: 14,
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
+    fontSize: 15,
   },
   textArea: {
     minHeight: 70,
@@ -420,8 +420,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
+    fontSize: 14,
     textAlignVertical: 'top',
   },
   priorityRow: {
@@ -460,9 +459,8 @@ const styles = StyleSheet.create({
   },
   subtaskTitle: {
     flex: 1,
-    fontFamily: 'SpaceMono',
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '500',
   },
   deleteSubtaskBtn: {
     padding: 4,
@@ -479,8 +477,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 8,
     paddingHorizontal: 12,
-    fontFamily: 'SpaceMono',
-    fontSize: 12,
+    fontSize: 14,
     marginRight: 8,
   },
   addSubtaskBtn: {

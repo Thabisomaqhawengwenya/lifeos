@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { updateService, UpdateStatus } from '@/src/services/UpdateService';
 import { haptic } from '@/src/design-system/haptics';
+import { updateService, UpdateStatus } from '@/src/services/UpdateService';
+import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export function UpdateBanner() {
   const [status, setStatus] = useState<UpdateStatus>(updateService.getStatus());
@@ -95,10 +95,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   message: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '500',
     color: '#000000',
-    lineHeight: 16,
+    lineHeight: 18,
     marginBottom: 8,
   },
   actionBtn: {

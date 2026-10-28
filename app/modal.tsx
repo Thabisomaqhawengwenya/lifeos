@@ -1,25 +1,25 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  Pressable,
-  ScrollView,
-  Platform,
-  KeyboardAvoidingView,
-  Alert,
-} from 'react-native';
-import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useAppTheme } from '@/src/design-system/ThemeContext';
-import { M3Button } from '@/src/components/ui/M3Button';
-import { M3Chip } from '@/src/components/ui/M3Chip';
+import { BrutalButton } from '@/src/components/ui/BrutalButton';
+import { BrutalChip } from '@/src/components/ui/BrutalChip';
 import { haptic } from '@/src/design-system/haptics';
-import { TaskRepository } from '@/src/repositories/TaskRepository';
-import { NoteRepository } from '@/src/repositories/NoteAndGoalRepository';
+import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { FinanceRepository } from '@/src/repositories/FinanceRepository';
+import { NoteRepository } from '@/src/repositories/NoteAndGoalRepository';
+import { TaskRepository } from '@/src/repositories/TaskRepository';
 import { NotificationService } from '@/src/services/NotificationService';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { useState } from 'react';
+import {
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
+} from 'react-native';
 
 type CaptureType = 'task' | 'note' | 'reminder' | 'expense';
 
@@ -118,28 +118,28 @@ export default function QuickCaptureModal() {
       <ScrollView contentContainerStyle={[styles.content, { padding: spacing.base }]}>
         {/* Type Selector Chips */}
         <View style={styles.typesRow}>
-          <M3Chip
+          <BrutalChip
             label="TASK"
             selected={captureType === 'task'}
             onPress={() => setCaptureType('task')}
             colorScheme="yellow"
             icon={<Ionicons name="checkbox-outline" size={14} color="#000000" />}
           />
-          <M3Chip
+          <BrutalChip
             label="NOTE"
             selected={captureType === 'note'}
             onPress={() => setCaptureType('note')}
             colorScheme="sky"
             icon={<Ionicons name="document-text-outline" size={14} color="#000000" />}
           />
-          <M3Chip
+          <BrutalChip
             label="REMINDER"
             selected={captureType === 'reminder'}
             onPress={() => setCaptureType('reminder')}
             colorScheme="coral"
             icon={<Ionicons name="alarm-outline" size={14} color="#000000" />}
           />
-          <M3Chip
+          <BrutalChip
             label="EXPENSE"
             selected={captureType === 'expense'}
             onPress={() => setCaptureType('expense')}
@@ -277,7 +277,7 @@ export default function QuickCaptureModal() {
         />
 
         <View style={{ marginTop: 24 }}>
-          <M3Button
+          <BrutalButton
             title={isSubmitting ? 'SAVING...' : 'SAVE TO SQLITE'}
             onPress={handleSave}
             variant="filled"
@@ -313,8 +313,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   headerSub: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
     marginTop: 2,
   },
   closeButton: {
@@ -351,8 +350,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 8,
     paddingHorizontal: 14,
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
+    fontSize: 15,
   },
   priorityRow: {
     flexDirection: 'row',
@@ -376,8 +374,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingTop: 12,
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
+    fontSize: 14,
     textAlignVertical: 'top',
   },
 });
