@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Platform, View, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { haptic } from '@/src/design-system/haptics';
 
@@ -9,18 +9,16 @@ export default function TabLayout() {
   const { colors, isDark } = useAppTheme();
 
   const renderTabIcon = (
-    name: keyof typeof Ionicons.glyphMap,
-    focusedName: keyof typeof Ionicons.glyphMap,
+    name: keyof typeof Feather.glyphMap,
     focused: boolean
   ) => (
     <View
       style={[
-        styles.iconContainer,
+        styles.iconSlot,
         focused && {
-          backgroundColor: colors.accentYellow,
-          borderColor: colors.border,
+          backgroundColor: colors.yellow,
           borderWidth: 2,
-          borderRadius: 8,
+          borderColor: colors.border,
           shadowColor: isDark ? '#FFFFFF' : '#000000',
           shadowOffset: { width: 2, height: 2 },
           shadowOpacity: 1,
@@ -29,10 +27,10 @@ export default function TabLayout() {
         },
       ]}
     >
-      <Ionicons
-        name={focused ? focusedName : name}
-        size={20}
-        color={focused ? '#000000' : isDark ? '#B0B0B0' : '#444444'}
+      <Feather
+        name={name}
+        size={18}
+        color={focused ? '#000000' : isDark ? '#A0A0A0' : '#444444'}
       />
     </View>
   );
@@ -41,28 +39,32 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.onBackground,
-        tabBarInactiveTintColor: isDark ? '#888888' : '#666666',
+        tabBarActiveTintColor: colors.text,
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
-          borderTopWidth: 3,
-          height: Platform.OS === 'ios' ? 88 : 72,
-          paddingBottom: Platform.OS === 'ios' ? 26 : 10,
+          borderTopWidth: colors.borderWidth,
+          height: Platform.OS === 'ios' ? 84 : 68,
+          paddingBottom: Platform.OS === 'ios' ? 22 : 8,
           paddingTop: 6,
-          elevation: 8,
+          elevation: 4,
           shadowColor: '#000000',
-          shadowOffset: { width: 0, height: -3 },
+          shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 1,
           shadowRadius: 0,
         },
+        tabBarItemStyle: {
+          flex: 1,
+          paddingVertical: 2,
+          paddingHorizontal: 0,
+        },
         tabBarLabelStyle: {
-          fontFamily: 'SpaceMono',
-          fontSize: 10,
+          fontSize: 12,
           fontWeight: '700',
           marginTop: 2,
           textTransform: 'uppercase',
-          letterSpacing: 0.5,
+          letterSpacing: 0.3,
         },
       }}
       screenListeners={{
@@ -75,40 +77,35 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ focused }) =>
-            renderTabIcon('grid-outline', 'grid', focused),
+          tabBarIcon: ({ focused }) => renderTabIcon('home', focused),
         }}
       />
       <Tabs.Screen
         name="planner"
         options={{
           title: 'Planner',
-          tabBarIcon: ({ focused }) =>
-            renderTabIcon('calendar-outline', 'calendar', focused),
+          tabBarIcon: ({ focused }) => renderTabIcon('calendar', focused),
         }}
       />
       <Tabs.Screen
         name="tasks"
         options={{
           title: 'Tasks',
-          tabBarIcon: ({ focused }) =>
-            renderTabIcon('checkbox-outline', 'checkbox', focused),
+          tabBarIcon: ({ focused }) => renderTabIcon('check-square', focused),
         }}
       />
       <Tabs.Screen
         name="life"
         options={{
           title: 'Life',
-          tabBarIcon: ({ focused }) =>
-            renderTabIcon('sparkles-outline', 'sparkles', focused),
+          tabBarIcon: ({ focused }) => renderTabIcon('compass', focused),
         }}
       />
       <Tabs.Screen
         name="assistant"
         options={{
-          title: 'AI Bot',
-          tabBarIcon: ({ focused }) =>
-            renderTabIcon('chatbubble-ellipses-outline', 'chatbubble-ellipses', focused),
+          title: 'AI',
+          tabBarIcon: ({ focused }) => renderTabIcon('cpu', focused),
         }}
       />
     </Tabs>
@@ -116,11 +113,11 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  iconContainer: {
-    paddingHorizontal: 12,
-    paddingVertical: 3,
+  iconSlot: {
+    width: 40,
+    height: 26,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 28,
   },
 });
