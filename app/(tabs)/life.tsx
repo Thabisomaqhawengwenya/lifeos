@@ -159,7 +159,12 @@ export default function LifeScreen() {
 
   const handleCheckUpdate = async () => {
     haptic.medium();
-    await updateService.checkForUpdates();
+    const hasUpdate = await updateService.checkForUpdates(true);
+    if (!hasUpdate && !updateService.getStatus().error) {
+      Alert.alert('LifeOS Updates', 'Your app is up to date! Running latest bundle.');
+    } else if (updateService.getStatus().error) {
+      Alert.alert('Update Check', updateService.getStatus().error || 'Failed to check updates.');
+    }
   };
 
   const handleApplyUpdate = async () => {

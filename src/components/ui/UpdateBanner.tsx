@@ -15,9 +15,11 @@ export function UpdateBanner() {
     return () => unsubscribe();
   }, []);
 
-  if (!status.isDownloaded || dismissed) {
+  if (dismissed || (!status.isDownloaded && !status.isAvailable)) {
     return null;
   }
+
+  const isDownloading = status.isAvailable && !status.isDownloaded;
 
   const handleApply = async () => {
     haptic.heavy();
@@ -30,7 +32,7 @@ export function UpdateBanner() {
         <View style={styles.headerRow}>
           <View style={styles.tag}>
             <Ionicons name="flash" size={12} color="#000000" />
-            <Text style={styles.tagText}>OTA UPDATE READY</Text>
+            <Text style={styles.tagText}>{isDownloading ? 'DOWNLOADING UPDATE' : 'OTA UPDATE READY'}</Text>
           </View>
           <TouchableOpacity onPress={() => setDismissed(true)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <Ionicons name="close" size={18} color="#000000" />
@@ -38,13 +40,15 @@ export function UpdateBanner() {
         </View>
 
         <Text style={styles.message}>
-          A new version of LifeOS was downloaded over Wi-Fi. Restart now to activate.
+          {isDownloading ? 'A new version of LifeOS is downloading over Wi-Fi...' : 'A new version of LifeOS was downloaded over Wi-Fi. Restart now to activate.'}
         </Text>
 
-        <TouchableOpacity style={styles.actionBtn} activeOpacity={0.85} onPress={handleApply}>
+        {!isDownloading && (
+          <TouchableOpacity style={styles.actionBtn} activeOpacity={0.85} onPress={handleApply}>
           <Text style={styles.actionBtnText}>RESTART & APPLY NOW</Text>
           <Ionicons name="arrow-forward" size={14} color="#000000" />
         </TouchableOpacity>
+        )}
       </View>
     </View>
   );
