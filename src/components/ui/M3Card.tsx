@@ -15,14 +15,25 @@ import Animated, {
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { haptic } from '@/src/design-system/haptics';
 
-type CardVariant = 'elevated' | 'filled' | 'outlined' | 'yellow' | 'coral' | 'mint' | 'lilac';
+export type CardStripeColor =
+  | 'yellow'
+  | 'mint'
+  | 'pink'
+  | 'purple'
+  | 'blue'
+  | 'coral'
+  | 'sky'
+  | 'lilac';
 
-interface M3CardProps {
+export interface M3CardProps {
   children: React.ReactNode;
   onPress?: () => void;
-  variant?: CardVariant;
+  stripe?: CardStripeColor;
+  backgroundColor?: string;
   style?: StyleProp<ViewStyle>;
   padding?: number;
+  testID?: string;
+  variant?: string;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -30,11 +41,13 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export function M3Card({
   children,
   onPress,
-  variant = 'elevated',
+  stripe,
+  backgroundColor,
   style,
   padding,
+  testID,
 }: M3CardProps) {
-  const { colors, radii, spacing, isDark } = useAppTheme();
+  const { colors, radii, spacing, shadow } = useAppTheme();
   const pressedX = useSharedValue(0);
   const pressedY = useSharedValue(0);
 
@@ -47,8 +60,8 @@ export function M3Card({
 
   const handlePressIn = () => {
     if (onPress) {
-      pressedX.value = withTiming(2, { duration: 60 });
-      pressedY.value = withTiming(2, { duration: 60 });
+      pressedX.value = withTiming(2, { duration: 50 });
+      pressedY.value = withTiming(2, { duration: 50 });
       haptic.light();
     }
   };
@@ -60,55 +73,79 @@ export function M3Card({
     }
   };
 
-  let backgroundColor = colors.surface;
-  let borderColor = colors.border;
-  let shadowColor = isDark ? '#FFFFFF' : '#000000';
+  const cardBg = backgroundColor || colors.surface;
 
-  if (variant === 'filled') {
-    backgroundColor = colors.surfaceVariant;
-  } else if (variant === 'yellow') {
-    backgroundColor = colors.accentYellow;
-  } else if (variant === 'coral') {
-    backgroundColor = colors.accentCoral;
-  } else if (variant === 'mint') {
-    backgroundColor = colors.accentJade;
-  } else if (variant === 'lilac') {
-    backgroundColor = colors.accentLilac;
-  } else if (variant === 'outlined') {
-    backgroundColor = 'transparent';
-  }
+  let stripeBg: string | undefined;
+  if (stripe === 'yellow') stripeBg = colors.yellow;
+  else if (stripe === 'mint') stripeBg = colors.mint;
+  else if (stripe === 'pink' || stripe === 'coral') stripeBg = colors.pink;
+  else if (stripe === 'purple' || stripe === 'lilac') stripeBg = colors.purple;
+  else if (stripe === 'blue' || stripe === 'sky') stripeBg = colors.blue;
 
   const cardStyle: ViewStyle = {
-    backgroundColor,
-    borderRadius: radii.lg,
-    padding: padding ?? spacing.base,
-    borderWidth: 2.5,
-    borderColor,
-    shadowColor,
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4,
+    backgroundColor: cardBg,
+    borderRadius: radii.md,
+    borderWidth: colors.borderWidth,
+    borderColor: colors.border,
+    shadowColor: shadow.shadowColor,
+    shadowOffset: shadow.shadowOffset,
+    shadowOpacity: shadow.shadowOpacity,
+    shadowRadius: shadow.shadowRadius,
+    elevation: shadow.elevation,
+    position: 'relative',
+    overflow: 'hidden',
   };
+
+  const innerStyle: ViewStyle = {
+    padding: padding ?? spacing.grid2,
+    paddingLeft: stripeBg ? (padding ?? spacing.grid2) + 6 : (padding ?? spacing.grid2),
+  };
+
+  const content = (
+    <View style={innerStyle}>
+      {stripeBg && (
+        <View
+          style={[
+            styles.stripeBar,
+            {
+              backgroundColor: stripeBg,
+              borderRightWidth: colors.borderWidth,
+              borderRightColor: colors.border,
+            },
+          ]}
+        />
+      )}
+      {children}
+    </View>
+  );
 
   if (onPress) {
     return (
       <AnimatedPressable
+        testID={testID}
         onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        style={[styles.base, cardStyle, animatedStyle, style]}
+        style={[cardStyle, animatedStyle, style]}
       >
-        {children}
+        {content}
       </AnimatedPressable>
     );
   }
 
-  return <View style={[styles.base, cardStyle, style]}>{children}</View>;
+  return (
+    <View testID={testID} style={[cardStyle, style]}>
+      {content}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-  base: {
-    overflow: 'hidden',
+  stripeBar: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: 8,
   },
 });

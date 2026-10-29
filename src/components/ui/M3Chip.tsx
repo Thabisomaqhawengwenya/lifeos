@@ -23,7 +23,9 @@ interface M3ChipProps {
   icon?: React.ReactNode;
   badge?: number | string;
   style?: StyleProp<ViewStyle>;
-  colorScheme?: 'yellow' | 'coral' | 'mint' | 'lilac' | 'sky';
+  colorScheme?: 'yellow' | 'mint' | 'pink' | 'purple' | 'blue' | 'coral' | 'sky' | 'lilac';
+  variant?: any;
+  testID?: string;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -36,8 +38,10 @@ export function M3Chip({
   badge,
   style,
   colorScheme = 'yellow',
+  variant,
+  testID,
 }: M3ChipProps) {
-  const { colors, radii, spacing, isDark } = useAppTheme();
+  const { colors, radii, spacing, typography, shadowSmall } = useAppTheme();
   const pressedX = useSharedValue(0);
   const pressedY = useSharedValue(0);
 
@@ -59,35 +63,37 @@ export function M3Chip({
     pressedY.value = withSpring(0, { damping: 15, stiffness: 350 });
   };
 
-  let activeBg = colors.accentYellow;
-  if (colorScheme === 'mint') activeBg = colors.accentJade;
-  else if (colorScheme === 'coral') activeBg = colors.accentCoral;
-  else if (colorScheme === 'lilac') activeBg = colors.accentLilac;
-  else if (colorScheme === 'sky') activeBg = colors.accentSky;
+  const effectiveScheme = (variant && typeof variant === 'string' && ['yellow', 'mint', 'pink', 'purple', 'blue', 'coral', 'sky', 'lilac'].includes(variant)) ? variant : colorScheme;
 
-  const backgroundColor = selected ? activeBg : colors.surface;
+  let activeColor = colors.yellow;
+  if (effectiveScheme === 'mint') activeColor = colors.mint;
+  else if (effectiveScheme === 'pink' || effectiveScheme === 'coral') activeColor = colors.pink;
+  else if (effectiveScheme === 'purple' || effectiveScheme === 'lilac') activeColor = colors.purple;
+  else if (effectiveScheme === 'blue' || effectiveScheme === 'sky') activeColor = colors.blue;
+
+  const backgroundColor = selected ? activeColor : colors.surface;
   const textColor = '#000000';
-  const borderColor = colors.border;
-  const shadowColor = isDark ? '#FFFFFF' : '#000000';
 
   return (
     <AnimatedPressable
+      testID={testID}
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
       style={[
         styles.chip,
         {
           backgroundColor,
-          borderColor,
+          borderColor: colors.border,
           borderRadius: radii.sm,
-          paddingHorizontal: spacing.md,
-          paddingVertical: spacing.xs + 2,
-          shadowColor,
-          shadowOffset: { width: 2, height: 2 },
-          shadowOpacity: 1,
-          shadowRadius: 0,
-          elevation: 2,
+          paddingHorizontal: spacing.grid2,
+          borderWidth: colors.borderWidth,
+          shadowColor: shadowSmall.shadowColor,
+          shadowOffset: shadowSmall.shadowOffset,
+          shadowOpacity: shadowSmall.shadowOpacity,
+          shadowRadius: shadowSmall.shadowRadius,
+          elevation: shadowSmall.elevation,
         },
         animatedStyle,
         style,
@@ -96,23 +102,26 @@ export function M3Chip({
       accessibilityState={{ selected }}
     >
       {icon && <View style={styles.icon}>{icon}</View>}
-      <Text style={[styles.label, { color: textColor }]}>{label}</Text>
+      <Text style={[styles.label, { fontSize: typography.sizes.xs }]}>{label}</Text>
       {badge !== undefined && (
         <View
           style={[
             styles.badge,
             {
-              backgroundColor: selected ? '#000000' : colors.accentYellow,
+              backgroundColor: selected ? '#000000' : colors.surfaceAlt,
               borderRadius: radii.xs,
-              borderColor: '#000000',
-              borderWidth: 1,
+              borderColor: colors.border,
+              borderWidth: 1.5,
             },
           ]}
         >
           <Text
             style={[
               styles.badgeText,
-              { color: selected ? '#FFFFFF' : '#000000' },
+              {
+                color: selected ? '#FFFFFF' : '#000000',
+                fontSize: typography.sizes.xs,
+              },
             ]}
           >
             {badge}
@@ -128,12 +137,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    minHeight: 34,
+    minHeight: 40, // Accessible touch height
   },
   label: {
-    fontFamily: 'SpaceMono',
-    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
@@ -143,15 +149,14 @@ const styles = StyleSheet.create({
   },
   badge: {
     marginLeft: 6,
-    paddingHorizontal: 5,
+    paddingHorizontal: 6,
     paddingVertical: 1,
-    minWidth: 16,
+    minWidth: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badgeText: {
     fontFamily: 'SpaceMono',
-    fontSize: 10,
     fontWeight: '700',
   },
 });

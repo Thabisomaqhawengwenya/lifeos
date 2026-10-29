@@ -23,38 +23,26 @@ export function M3Header({
   onBack,
 }: M3HeaderProps) {
   const insets = useSafeAreaInsets();
-  const { colors, spacing, isDark } = useAppTheme();
+  const { colors, spacing, typography, radii, shadowSmall } = useAppTheme();
 
   return (
     <View
       style={[
         styles.container,
         {
-          paddingTop: Math.max(insets.top, spacing.md) + spacing.xs,
-          paddingHorizontal: spacing.base,
-          paddingBottom: spacing.md,
+          paddingTop: Math.max(insets.top, spacing.grid2) + spacing.grid1,
+          paddingHorizontal: spacing.grid2,
+          paddingBottom: spacing.grid2,
           backgroundColor: colors.background,
-          borderBottomWidth: 2.5,
+          borderBottomWidth: colors.borderWidth,
           borderBottomColor: colors.border,
         },
       ]}
     >
-      <View style={styles.topRow}>
-        <View style={styles.titleArea}>
-          {badge && (
-            <View
-              style={[
-                styles.badge,
-                {
-                  backgroundColor: colors.accentYellow,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <Text style={styles.badgeText}>{badge.toUpperCase()}</Text>
-            </View>
-          )}
-          <View style={styles.headingRow}>
+      {/* Top Row: Badge or Back button + Right Actions */}
+      {(badge || rightAction || showBack) && (
+        <View style={styles.utilityRow}>
+          <View style={styles.utilityLeft}>
             {showBack && (
               <Pressable
                 onPress={() => {
@@ -66,40 +54,77 @@ export function M3Header({
                   {
                     backgroundColor: colors.surface,
                     borderColor: colors.border,
-                    shadowColor: isDark ? '#FFFFFF' : '#000000',
+                    borderRadius: radii.sm,
+                    borderWidth: colors.borderWidth,
+                    shadowColor: shadowSmall.shadowColor,
+                    shadowOffset: shadowSmall.shadowOffset,
+                    shadowOpacity: shadowSmall.shadowOpacity,
+                    shadowRadius: shadowSmall.shadowRadius,
+                    elevation: shadowSmall.elevation,
                   },
                 ]}
                 accessibilityRole="button"
                 accessibilityLabel="Go back"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Ionicons name="arrow-back" size={20} color={colors.onBackground} />
+                <Ionicons name="arrow-back" size={20} color={colors.text} />
               </Pressable>
             )}
-            <Text
-              style={[
-                styles.title,
-                {
-                  color: colors.onBackground,
-                  fontFamily: 'SpaceMono',
-                },
-              ]}
-            >
-              {title}
-            </Text>
+            {badge && (
+              <View
+                style={[
+                  styles.badge,
+                  {
+                    backgroundColor: colors.yellow,
+                    borderColor: colors.border,
+                    borderRadius: radii.sm,
+                    borderWidth: colors.borderWidth,
+                    shadowColor: shadowSmall.shadowColor,
+                    shadowOffset: shadowSmall.shadowOffset,
+                    shadowOpacity: shadowSmall.shadowOpacity,
+                    shadowRadius: shadowSmall.shadowRadius,
+                    elevation: shadowSmall.elevation,
+                  },
+                ]}
+              >
+                <Text style={[styles.badgeText, { color: '#000000' }]}>
+                  {badge.toUpperCase()}
+                </Text>
+              </View>
+            )}
           </View>
-          {subtitle && (
-            <Text
-              style={[
-                styles.subtitle,
-                { color: isDark ? '#A0A0A0' : '#444444' },
-              ]}
-            >
-              {subtitle}
-            </Text>
-          )}
-        </View>
 
-        {rightAction && <View style={styles.rightActionContainer}>{rightAction}</View>}
+          {rightAction && <View style={styles.rightActionContainer}>{rightAction}</View>}
+        </View>
+      )}
+
+      {/* Main Title Row: Full width to prevent orphaning words */}
+      <View style={styles.titleContainer}>
+        <Text
+          numberOfLines={2}
+          style={[
+            styles.title,
+            {
+              color: colors.text,
+              fontSize: typography.sizes.xl, // 28
+            },
+          ]}
+        >
+          {title}
+        </Text>
+        {subtitle && (
+          <Text
+            style={[
+              styles.subtitle,
+              {
+                color: colors.textMuted,
+                fontSize: typography.sizes.xs, // 12px min
+              },
+            ]}
+          >
+            {subtitle}
+          </Text>
+        )}
       </View>
     </View>
   );
@@ -109,63 +134,49 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
   },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  titleArea: {
-    flex: 1,
-    paddingRight: 12,
-  },
-  headingRow: {
+  utilityRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    minHeight: 36,
+  },
+  utilityLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   backButton: {
-    marginRight: 10,
-    padding: 6,
-    borderWidth: 2,
-    borderRadius: 6,
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   badge: {
-    alignSelf: 'flex-start',
-    marginBottom: 4,
-    borderWidth: 2,
-    borderRadius: 4,
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    shadowColor: '#000000',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
+    paddingVertical: 4,
   },
   badgeText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
-    color: '#000000',
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
+  },
+  titleContainer: {
+    width: '100%',
+    marginTop: 2,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '900',
+    fontWeight: '800',
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
     marginTop: 4,
     letterSpacing: 0.2,
   },
   rightActionContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
 });

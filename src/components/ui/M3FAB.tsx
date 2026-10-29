@@ -11,13 +11,13 @@ import Animated, {
   withTiming,
   withSpring,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { haptic } from '@/src/design-system/haptics';
 
 interface M3FABProps {
   onPress: () => void;
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: string;
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
 }
@@ -26,11 +26,11 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function M3FAB({
   onPress,
-  icon = 'add',
+  icon = 'plus',
   style,
   accessibilityLabel = 'Create new item',
 }: M3FABProps) {
-  const { colors, radii, isDark } = useAppTheme();
+  const { colors, radii, shadow } = useAppTheme();
   const pressedX = useSharedValue(0);
   const pressedY = useSharedValue(0);
 
@@ -52,8 +52,6 @@ export function M3FAB({
     pressedY.value = withSpring(0, { damping: 15, stiffness: 350 });
   };
 
-  const shadowColor = isDark ? '#FFFFFF' : '#000000';
-
   return (
     <AnimatedPressable
       onPress={onPress}
@@ -62,10 +60,15 @@ export function M3FAB({
       style={[
         styles.fab,
         {
-          backgroundColor: colors.accentYellow,
+          backgroundColor: colors.yellow,
           borderColor: colors.border,
+          borderWidth: colors.borderWidth,
           borderRadius: radii.md,
-          shadowColor,
+          shadowColor: shadow.shadowColor,
+          shadowOffset: shadow.shadowOffset,
+          shadowOpacity: shadow.shadowOpacity,
+          shadowRadius: shadow.shadowRadius,
+          elevation: shadow.elevation,
         },
         animatedStyle,
         style,
@@ -73,21 +76,20 @@ export function M3FAB({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
     >
-      <Ionicons name={icon} size={28} color="#000000" />
+      <Feather name={icon === 'add' ? 'plus' : (icon as any)} size={26} color="#000000" />
     </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
   fab: {
-    width: 58,
-    height: 58,
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    width: 56,
+    height: 56,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2.5,
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 6,
+    zIndex: 99,
   },
 });

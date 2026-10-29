@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { M3Button } from './M3Button';
 
 interface M3EmptyStateProps {
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: string;
   title: string;
   description: string;
   actionTitle?: string;
@@ -13,13 +13,13 @@ interface M3EmptyStateProps {
 }
 
 export function M3EmptyState({
-  icon = 'leaf-outline',
+  icon = 'inbox',
   title,
   description,
   actionTitle,
   onAction,
 }: M3EmptyStateProps) {
-  const { colors, spacing, isDark } = useAppTheme();
+  const { colors, spacing, typography, radii, shadow } = useAppTheme();
 
   return (
     <View
@@ -28,7 +28,13 @@ export function M3EmptyState({
         {
           backgroundColor: colors.surface,
           borderColor: colors.border,
-          shadowColor: isDark ? '#FFFFFF' : '#000000',
+          borderWidth: colors.borderWidth,
+          borderRadius: radii.md,
+          shadowColor: shadow.shadowColor,
+          shadowOffset: shadow.shadowOffset,
+          shadowOpacity: shadow.shadowOpacity,
+          shadowRadius: shadow.shadowRadius,
+          elevation: shadow.elevation,
         },
       ]}
     >
@@ -36,22 +42,33 @@ export function M3EmptyState({
         style={[
           styles.iconBox,
           {
-            backgroundColor: colors.accentYellow,
+            backgroundColor: colors.yellow,
             borderColor: colors.border,
+            borderWidth: colors.borderWidth,
+            borderRadius: radii.sm,
           },
         ]}
       >
-        <Ionicons name={icon} size={30} color="#000000" />
+        <Feather name={icon as any} size={28} color="#000000" />
       </View>
-      <Text style={[styles.title, { color: colors.onSurface }]}>
+      <Text
+        style={[
+          styles.title,
+          {
+            color: colors.text,
+            fontSize: typography.sizes.base,
+          },
+        ]}
+      >
         {title}
       </Text>
       <Text
         style={[
           styles.description,
           {
-            color: isDark ? '#B0B0B0' : '#444444',
-            marginBottom: actionTitle ? spacing.base : 0,
+            color: colors.textMuted,
+            fontSize: typography.sizes.xs,
+            marginBottom: actionTitle ? spacing.grid2 : 0,
           },
         ]}
       >
@@ -61,8 +78,8 @@ export function M3EmptyState({
         <M3Button
           title={actionTitle}
           onPress={onAction}
-          variant="filled"
-          size="small"
+          variant="primary"
+          size="sm"
         />
       )}
     </View>
@@ -73,39 +90,24 @@ const styles = StyleSheet.create({
   card: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2.5,
-    borderRadius: 12,
     padding: 24,
     marginVertical: 16,
     marginHorizontal: 4,
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4,
   },
   iconBox: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-    borderWidth: 2,
+    width: 56,
+    height: 56,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
-    shadowColor: '#000000',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
   },
   title: {
-    fontFamily: 'SpaceMono',
-    fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '800',
     textAlign: 'center',
     marginBottom: 6,
+    letterSpacing: 0.3,
   },
   description: {
-    fontSize: 12,
     fontWeight: '500',
     textAlign: 'center',
     maxWidth: 280,

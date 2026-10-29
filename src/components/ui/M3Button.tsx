@@ -18,13 +18,13 @@ import Animated, {
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { haptic } from '@/src/design-system/haptics';
 
-type ButtonVariant = 'filled' | 'tonal' | 'outlined' | 'destructive' | 'text';
-type ButtonSize = 'small' | 'medium' | 'large';
+type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'ghost';
+type ButtonSize = 'small' | 'medium' | 'large' | 'sm' | 'md' | 'lg';
 
 interface M3ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: ButtonVariant;
+  variant?: ButtonVariant | 'filled' | 'tonal' | 'outlined'; // backwards compatibility
   size?: ButtonSize;
   icon?: React.ReactNode;
   loading?: boolean;
@@ -32,6 +32,7 @@ interface M3ButtonProps {
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
   pill?: boolean;
+  testID?: string;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -39,7 +40,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export function M3Button({
   title,
   onPress,
-  variant = 'filled',
+  variant = 'primary',
   size = 'medium',
   icon,
   loading = false,
@@ -47,8 +48,9 @@ export function M3Button({
   style,
   textStyle,
   pill = false,
+  testID,
 }: M3ButtonProps) {
-  const { colors, radii, spacing, isDark } = useAppTheme();
+  const { colors, radii, spacing, typography, shadowSmall } = useAppTheme();
   const pressedX = useSharedValue(0);
   const pressedY = useSharedValue(0);
 
@@ -61,8 +63,8 @@ export function M3Button({
 
   const handlePressIn = () => {
     if (!disabled && !loading) {
-      pressedX.value = withTiming(2, { duration: 60 });
-      pressedY.value = withTiming(2, { duration: 60 });
+      pressedX.value = withTiming(2, { duration: 50 });
+      pressedY.value = withTiming(2, { duration: 50 });
       haptic.medium();
     }
   };
@@ -72,57 +74,50 @@ export function M3Button({
     pressedY.value = withSpring(0, { damping: 15, stiffness: 350 });
   };
 
-  // Neo-Brutalist Colors
-  let backgroundColor: string = colors.accentYellow;
-  let textColor: string = '#000000';
-  let borderWidth: number = 2.5;
-  let borderColor: string = colors.border;
-  let shadowWidth = 3;
-  let shadowHeight = 3;
+  // Resolve variants (supporting legacy aliases 'filled', 'tonal', 'outlined')
+  let resolvedVariant = variant;
+  if (variant === 'filled') resolvedVariant = 'primary';
+  if (variant === 'tonal' || variant === 'outlined') resolvedVariant = 'secondary';
 
-  if (variant === 'filled') {
-    backgroundColor = disabled ? colors.surfaceVariant : colors.accentYellow;
+  let backgroundColor = colors.yellow;
+  let textColor = '#000000';
+  let borderWidth = colors.borderWidth;
+  let hasShadow = true;
+
+  if (resolvedVariant === 'primary') {
+    backgroundColor = disabled ? colors.surfaceAlt : colors.yellow;
     textColor = '#000000';
-  } else if (variant === 'tonal') {
-    backgroundColor = disabled ? colors.surfaceVariant : colors.surface;
-    textColor = colors.onSurface;
-  } else if (variant === 'outlined') {
+  } else if (resolvedVariant === 'secondary') {
+    backgroundColor = disabled ? colors.surfaceAlt : colors.surface;
+    textColor = colors.text;
+  } else if (resolvedVariant === 'destructive') {
+    backgroundColor = disabled ? colors.surfaceAlt : colors.pink;
+    textColor = '#000000';
+  } else if (resolvedVariant === 'ghost') {
     backgroundColor = 'transparent';
-    textColor = colors.onBackground;
-  } else if (variant === 'destructive') {
-    backgroundColor = colors.accentRed;
-    textColor = '#FFFFFF';
-  } else if (variant === 'text') {
-    backgroundColor = 'transparent';
-    textColor = colors.onBackground;
+    textColor = colors.text;
     borderWidth = 0;
-    shadowWidth = 0;
-    shadowHeight = 0;
+    hasShadow = false;
   }
 
-  // Size styling
-  let height = 46;
-  let paddingHorizontal = spacing.lg;
-  let fontSize = 13;
+  // Size styling ensuring minimum 44px touch targets
+  let minHeight = spacing.minTouchTarget; // 44px minimum touch target!
+  let paddingHorizontal = spacing.grid2; // 16px
+  let fontSize = typography.sizes.sm; // 14px
 
-  if (size === 'small') {
-    height = 36;
-    paddingHorizontal = spacing.md;
-    fontSize = 11;
-    shadowWidth = 2;
-    shadowHeight = 2;
-  } else if (size === 'large') {
-    height = 54;
-    paddingHorizontal = spacing.xxl;
-    fontSize = 15;
-    shadowWidth = 4;
-    shadowHeight = 4;
+  if (size === 'small' || size === 'sm') {
+    minHeight = spacing.minTouchTarget;
+    paddingHorizontal = spacing.grid2;
+    fontSize = typography.sizes.xs; // 12px
+  } else if (size === 'large' || size === 'lg') {
+    minHeight = 52;
+    paddingHorizontal = spacing.grid3;
+    fontSize = typography.sizes.base; // 16px
   }
-
-  const shadowColor = isDark ? '#FFFFFF' : '#000000';
 
   return (
     <AnimatedPressable
+      testID={testID}
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
@@ -130,17 +125,17 @@ export function M3Button({
       style={[
         styles.base,
         {
-          height,
+          minHeight,
           paddingHorizontal,
           backgroundColor,
           borderRadius: pill ? radii.full : radii.md,
           borderWidth,
-          borderColor,
-          shadowColor,
-          shadowOffset: { width: shadowWidth, height: shadowHeight },
-          shadowOpacity: borderWidth > 0 ? 1 : 0,
-          shadowRadius: 0,
-          elevation: borderWidth > 0 ? 3 : 0,
+          borderColor: colors.border,
+          shadowColor: shadowSmall.shadowColor,
+          shadowOffset: hasShadow ? shadowSmall.shadowOffset : { width: 0, height: 0 },
+          shadowOpacity: hasShadow ? shadowSmall.shadowOpacity : 0,
+          shadowRadius: shadowSmall.shadowRadius,
+          elevation: hasShadow ? shadowSmall.elevation : 0,
           opacity: disabled ? 0.6 : 1,
         },
         animatedStyle,
@@ -152,7 +147,7 @@ export function M3Button({
       {loading ? (
         <ActivityIndicator color={textColor} size="small" />
       ) : (
-        <>
+        <View style={styles.contentRow}>
           {icon && <View style={styles.iconContainer}>{icon}</View>}
           <Text
             style={[
@@ -160,14 +155,14 @@ export function M3Button({
               {
                 color: textColor,
                 fontSize,
-                fontFamily: 'SpaceMono',
+                fontWeight: typography.weights.bold,
               },
               textStyle,
             ]}
           >
             {title}
           </Text>
-        </>
+        </View>
       )}
     </AnimatedPressable>
   );
@@ -175,6 +170,10 @@ export function M3Button({
 
 const styles = StyleSheet.create({
   base: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -184,7 +183,6 @@ const styles = StyleSheet.create({
   },
   text: {
     textAlign: 'center',
-    fontWeight: '700',
     letterSpacing: 0.5,
   },
 });
