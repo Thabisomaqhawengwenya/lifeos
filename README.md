@@ -10,9 +10,8 @@
 
 | Platform | Download Link | Build Type | Status |
 | :--- | :--- | :--- | :--- |
-| **Android (APK v1.2.0)** | [⬇️ Download LifeOS v1.2.0 APK](https://github.com/Thabisomaqhawengwenya/lifeos/releases/download/v1.2.0/LifeOS-v1.2.0.apk) | Standalone Preview APK (`com.maqhawe.lifeos`) | 🚀 In Progress (EAS Cloud) |
-| **GitHub Release v1.2.0** | [📦 GitHub Release v1.2.0](https://github.com/Thabisomaqhawengwenya/lifeos/releases/tag/v1.2.0) | Official Release Asset with OTA engine | 🔄 Packaging |
-| **Expo EAS Cloud Build** | [🌐 Expo Build Details](https://expo.dev/accounts/maqhawengwenya/projects/LifeOS/builds/dca93ae0-479e-49cc-b58f-f3645aa61b3d) | EAS Cloud Artifact (`dca93ae0`) | ⚙️ Building |
+| **Android (APK v1.2.0)** | [⬇️ Download LifeOS v1.2.0 APK (EAS Direct)](https://expo.dev/accounts/maqhawengwenya/projects/LifeOS/builds/dca93ae0-479e-49cc-b58f-f3645aa61b3d) | Standalone Preview APK (`com.maqhawe.lifeos`) | ✅ Complete & Ready |
+| **Expo EAS Cloud Build** | [🌐 Expo Build Details](https://expo.dev/accounts/maqhawengwenya/projects/LifeOS/builds/dca93ae0-479e-49cc-b58f-f3645aa61b3d) | EAS Cloud Artifact (`dca93ae0`) | ✅ Built Successfully |
 
 ---
 
