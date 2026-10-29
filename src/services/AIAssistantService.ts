@@ -28,6 +28,9 @@ export class AIAssistantService {
    */
   static parseUserInput(input: string): { responseText: string; action?: ProposedAIAction } {
     const trimmed = input.trim();
+    if (!trimmed) {
+      return { responseText: 'Hello Mr Q! How can I assist you with LifeOS today?' };
+    }
     const lower = trimmed.toLowerCase();
 
     // 1. Expense Detection (e.g. "Spent $45 on groceries" or "Log expense 20 for lunch")

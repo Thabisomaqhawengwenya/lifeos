@@ -65,6 +65,18 @@ export class NoteRepository {
     };
   }
 
+  static async updateNote(
+    id: string,
+    data: { title: string; content: string; tags?: string }
+  ): Promise<void> {
+    const db = await getDatabase();
+    const now = new Date().toISOString();
+    await db.runAsync(
+      `UPDATE notes SET title = ?, content = ?, tags = ?, updated_at = ? WHERE id = ?`,
+      [data.title, data.content, data.tags || null, now, id]
+    );
+  }
+
   static async togglePin(id: string): Promise<boolean> {
     const db = await getDatabase();
     const note = await db.getFirstAsync<any>(`SELECT is_pinned FROM notes WHERE id = ?`, [id]);
@@ -124,6 +136,15 @@ export class GoalRepository {
       status: 'in_progress',
       created_at: now,
     };
+  }
+
+  static async updateGoalProgress(id: string, delta: number): Promise<void> {
+    const db = await getDatabase();
+    const goal = await db.getFirstAsync<any>(`SELECT progress_percent FROM goals WHERE id = ?`, [id]);
+    if (!goal) return;
+    const current = Number(goal.progress_percent || 0);
+    const updated = Math.max(0, Math.min(100, current + delta));
+    await this.updateProgress(id, updated);
   }
 
   static async updateProgress(id: string, progress: number): Promise<void> {

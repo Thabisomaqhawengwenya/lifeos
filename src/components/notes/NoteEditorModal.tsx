@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { M3Button } from '@/src/components/ui/M3Button';
 import { haptic } from '@/src/design-system/haptics';
@@ -29,7 +29,7 @@ export function NoteEditorModal({
   onClose,
   onSaved,
 }: NoteEditorModalProps) {
-  const { colors, isDark } = useAppTheme();
+  const { colors, spacing, typography, radii, shadowSmall, isDark } = useAppTheme();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tags, setTags] = useState('');
@@ -54,8 +54,8 @@ export function NoteEditorModal({
 
     const noteTitle = title.trim() || content.trim().slice(0, 30);
     if (note) {
-      await NoteRepository.deleteNote(note.id);
-      await NoteRepository.createNote({
+      // Non-destructive atomic SQL update preserving ID and timestamp
+      await NoteRepository.updateNote(note.id, {
         title: noteTitle,
         content: content.trim(),
         tags: tags.trim() || undefined,
@@ -82,8 +82,6 @@ export function NoteEditorModal({
     }
   };
 
-  const shadowColor = isDark ? '#FFFFFF' : '#000000';
-
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <KeyboardAvoidingView
@@ -98,17 +96,37 @@ export function NoteEditorModal({
             {
               backgroundColor: colors.surface,
               borderColor: colors.border,
+              borderWidth: colors.borderWidth,
+              borderRadius: radii.lg,
             },
           ]}
         >
           {/* Header */}
-          <View style={[styles.headerRow, { borderBottomColor: colors.border }]}>
+          <View
+            style={[
+              styles.headerRow,
+              {
+                borderBottomColor: colors.border,
+                borderBottomWidth: colors.borderWidth,
+              },
+            ]}
+          >
             <View>
-              <Text style={[styles.headerTitle, { color: colors.onSurface }]}>
+              <Text
+                style={[
+                  styles.headerTitle,
+                  { color: colors.text, fontSize: typography.sizes.base },
+                ]}
+              >
                 {note ? 'EDIT NOTE' : 'WRITE NOTE'}
               </Text>
-              <Text style={[styles.headerSub, { color: isDark ? '#A0A0A0' : '#555555' }]}>
-                Local SQLite Note Repository
+              <Text
+                style={[
+                  styles.headerSub,
+                  { color: colors.textMuted, fontSize: typography.sizes.xs },
+                ]}
+              >
+                Offline personal note
               </Text>
             </View>
             <Pressable
@@ -118,17 +136,31 @@ export function NoteEditorModal({
                 {
                   backgroundColor: colors.surface,
                   borderColor: colors.border,
-                  shadowColor,
+                  borderWidth: colors.borderWidth,
+                  borderRadius: radii.sm,
+                  shadowColor: shadowSmall.shadowColor,
+                  shadowOffset: shadowSmall.shadowOffset,
+                  shadowOpacity: shadowSmall.shadowOpacity,
+                  shadowRadius: shadowSmall.shadowRadius,
+                  elevation: shadowSmall.elevation,
                 },
               ]}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons name="close" size={20} color={colors.onSurface} />
+              <Feather name="x" size={20} color={colors.text} />
             </Pressable>
           </View>
 
           <ScrollView style={styles.scrollBody} showsVerticalScrollIndicator={false}>
             {/* Title */}
-            <Text style={[styles.fieldLabel, { color: colors.onSurface }]}>NOTE TITLE</Text>
+            <Text
+              style={[
+                styles.fieldLabel,
+                { color: colors.text, fontSize: typography.sizes.xs },
+              ]}
+            >
+              NOTE TITLE
+            </Text>
             <TextInput
               value={title}
               onChangeText={setTitle}
@@ -139,13 +171,23 @@ export function NoteEditorModal({
                 {
                   backgroundColor: colors.background,
                   borderColor: colors.border,
-                  color: colors.onSurface,
+                  borderWidth: colors.borderWidth,
+                  borderRadius: radii.sm,
+                  color: colors.text,
+                  fontSize: typography.sizes.sm,
                 },
               ]}
             />
 
             {/* Content */}
-            <Text style={[styles.fieldLabel, { color: colors.onSurface }]}>BODY CONTENT</Text>
+            <Text
+              style={[
+                styles.fieldLabel,
+                { color: colors.text, fontSize: typography.sizes.xs },
+              ]}
+            >
+              BODY CONTENT
+            </Text>
             <TextInput
               value={content}
               onChangeText={setContent}
@@ -158,13 +200,23 @@ export function NoteEditorModal({
                 {
                   backgroundColor: colors.background,
                   borderColor: colors.border,
-                  color: colors.onSurface,
+                  borderWidth: colors.borderWidth,
+                  borderRadius: radii.sm,
+                  color: colors.text,
+                  fontSize: typography.sizes.sm,
                 },
               ]}
             />
 
             {/* Tags */}
-            <Text style={[styles.fieldLabel, { color: colors.onSurface }]}>TAG (OPTIONAL)</Text>
+            <Text
+              style={[
+                styles.fieldLabel,
+                { color: colors.text, fontSize: typography.sizes.xs },
+              ]}
+            >
+              TAG (OPTIONAL)
+            </Text>
             <TextInput
               value={tags}
               onChangeText={setTags}
@@ -175,7 +227,10 @@ export function NoteEditorModal({
                 {
                   backgroundColor: colors.background,
                   borderColor: colors.border,
-                  color: colors.onSurface,
+                  borderWidth: colors.borderWidth,
+                  borderRadius: radii.sm,
+                  color: colors.text,
+                  fontSize: typography.sizes.sm,
                 },
               ]}
             />
@@ -185,8 +240,8 @@ export function NoteEditorModal({
               <M3Button
                 title={isSaving ? 'SAVING...' : 'SAVE NOTE'}
                 onPress={handleSave}
-                variant="filled"
-                size="medium"
+                variant="primary"
+                size="md"
                 loading={isSaving}
               />
               {note && (
@@ -194,7 +249,7 @@ export function NoteEditorModal({
                   title="DELETE NOTE"
                   onPress={handleDelete}
                   variant="destructive"
-                  size="small"
+                  size="sm"
                   style={{ marginTop: 8 }}
                 />
               )}
@@ -218,10 +273,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheetContainer: {
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    borderWidth: 2.5,
-    borderBottomWidth: 0,
     maxHeight: '85%',
     paddingTop: 16,
   },
@@ -231,38 +282,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingBottom: 14,
-    borderBottomWidth: 2.5,
   },
   headerTitle: {
-    fontFamily: 'SpaceMono',
-    fontSize: 16,
-    fontWeight: '900',
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   headerSub: {
-    fontFamily: 'SpaceMono',
-    fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '600',
     marginTop: 2,
   },
   closeButton: {
-    width: 34,
-    height: 34,
-    borderWidth: 2,
-    borderRadius: 6,
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
   },
   scrollBody: {
     paddingHorizontal: 16,
     paddingTop: 16,
   },
   fieldLabel: {
-    fontFamily: 'SpaceMono',
-    fontSize: 11,
     fontWeight: '700',
     marginTop: 14,
     marginBottom: 6,
@@ -270,20 +309,14 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 46,
-    borderWidth: 2,
-    borderRadius: 8,
     paddingHorizontal: 14,
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
+    fontWeight: '600',
   },
   textArea: {
     minHeight: 120,
-    borderWidth: 2,
-    borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
+    fontWeight: '500',
     textAlignVertical: 'top',
   },
   actionsContainer: {

@@ -10,9 +10,9 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/design-system/ThemeContext';
-import { M3Card } from '@/src/components/ui/M3Card';
+import { M3Card, CardStripeColor } from '@/src/components/ui/M3Card';
 import { haptic } from '@/src/design-system/haptics';
 import { SearchRepository, SearchResultItem } from '@/src/repositories/SearchRepository';
 
@@ -27,7 +27,7 @@ export function GlobalSearchModal({
   onClose,
   onSelectItem,
 }: GlobalSearchModalProps) {
-  const { colors, isDark } = useAppTheme();
+  const { colors, spacing, typography, radii, shadowSmall, isDark } = useAppTheme();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResultItem[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
@@ -47,38 +47,36 @@ export function GlobalSearchModal({
   const getIconForType = (type: SearchResultItem['type']) => {
     switch (type) {
       case 'task':
-        return 'checkbox-outline';
+        return 'check-square';
       case 'note':
-        return 'document-text-outline';
+        return 'file-text';
       case 'habit':
-        return 'flame-outline';
+        return 'activity';
       case 'expense':
-        return 'cash-outline';
+        return 'dollar-sign';
       case 'goal':
-        return 'trophy-outline';
+        return 'award';
       default:
-        return 'search-outline';
+        return 'search';
     }
   };
 
-  const getTypeColor = (type: SearchResultItem['type']) => {
+  const getStripeForType = (type: SearchResultItem['type']): CardStripeColor => {
     switch (type) {
       case 'task':
-        return colors.accentYellow;
+        return 'yellow';
       case 'note':
-        return colors.accentSky;
+        return 'yellow';
       case 'habit':
-        return colors.accentJade;
+        return 'mint';
       case 'expense':
-        return colors.accentCoral;
+        return 'blue';
       case 'goal':
-        return colors.accentLilac;
+        return 'yellow';
       default:
-        return colors.surface;
+        return 'yellow';
     }
   };
-
-  const shadowColor = isDark ? '#FFFFFF' : '#000000';
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
@@ -88,30 +86,53 @@ export function GlobalSearchModal({
       >
         <View style={[styles.container, { backgroundColor: colors.background }]}>
           {/* Search Header */}
-          <View style={[styles.searchBarRow, { borderBottomColor: colors.border }]}>
+          <View
+            style={[
+              styles.searchBarRow,
+              {
+                backgroundColor: colors.surface,
+                borderBottomColor: colors.border,
+                borderBottomWidth: colors.borderWidth,
+              },
+            ]}
+          >
             <View
               style={[
                 styles.inputWrapper,
                 {
-                  backgroundColor: colors.surface,
+                  backgroundColor: colors.background,
                   borderColor: colors.border,
-                  shadowColor,
+                  borderWidth: colors.borderWidth,
+                  borderRadius: radii.sm,
+                  shadowColor: shadowSmall.shadowColor,
+                  shadowOffset: shadowSmall.shadowOffset,
+                  shadowOpacity: shadowSmall.shadowOpacity,
+                  shadowRadius: shadowSmall.shadowRadius,
+                  elevation: shadowSmall.elevation,
                 },
               ]}
             >
-              <Ionicons name="search" size={18} color="#000000" style={{ marginLeft: 10 }} />
+              <Feather
+                name="search"
+                size={18}
+                color={colors.text}
+                style={{ marginLeft: 10 }}
+              />
               <TextInput
                 value={query}
                 onChangeText={handleSearch}
                 placeholder="Search tasks, notes, habits, finances..."
                 placeholderTextColor="#888888"
-                style={[styles.searchInput, { color: colors.onSurface }]}
+                style={[
+                  styles.searchInput,
+                  { color: colors.text, fontSize: typography.sizes.sm },
+                ]}
                 autoFocus
                 returnKeyType="search"
               />
               {query ? (
                 <Pressable onPress={() => handleSearch('')} style={styles.clearBtn}>
-                  <Ionicons name="close-circle" size={18} color="#000000" />
+                  <Feather name="x" size={18} color={colors.text} />
                 </Pressable>
               ) : null}
             </View>
@@ -123,23 +144,50 @@ export function GlobalSearchModal({
                 {
                   backgroundColor: colors.surface,
                   borderColor: colors.border,
-                  shadowColor,
+                  borderWidth: colors.borderWidth,
+                  borderRadius: radii.sm,
+                  shadowColor: shadowSmall.shadowColor,
+                  shadowOffset: shadowSmall.shadowOffset,
+                  shadowOpacity: shadowSmall.shadowOpacity,
+                  shadowRadius: shadowSmall.shadowRadius,
+                  elevation: shadowSmall.elevation,
                 },
               ]}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={styles.cancelText}>CLOSE</Text>
+              <Text
+                style={[
+                  styles.cancelText,
+                  { color: colors.text, fontSize: typography.sizes.xs },
+                ]}
+              >
+                CLOSE
+              </Text>
             </Pressable>
           </View>
 
           {/* Results List */}
-          <ScrollView contentContainerStyle={styles.resultsScroll} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={styles.resultsScroll}
+            showsVerticalScrollIndicator={false}
+          >
             {hasSearched && results.length === 0 ? (
               <View style={styles.emptyContainer}>
-                <Ionicons name="search" size={36} color={colors.border} />
-                <Text style={[styles.emptyTitle, { color: colors.onBackground }]}>
+                <Feather name="search" size={36} color={colors.border} />
+                <Text
+                  style={[
+                    styles.emptyTitle,
+                    { color: colors.text, fontSize: typography.sizes.base },
+                  ]}
+                >
                   NO MATCHES FOUND
                 </Text>
-                <Text style={[styles.emptySub, { color: isDark ? '#A0A0A0' : '#555555' }]}>
+                <Text
+                  style={[
+                    styles.emptySub,
+                    { color: colors.textMuted, fontSize: typography.sizes.xs },
+                  ]}
+                >
                   No items matched "{query}" across your SQLite database.
                 </Text>
               </View>
@@ -148,7 +196,7 @@ export function GlobalSearchModal({
             {results.map((item) => (
               <M3Card
                 key={`${item.type}_${item.id}`}
-                variant="elevated"
+                stripe={getStripeForType(item.type)}
                 style={styles.resultCard}
                 onPress={() => {
                   haptic.selection();
@@ -161,28 +209,62 @@ export function GlobalSearchModal({
                     style={[
                       styles.iconCircle,
                       {
-                        backgroundColor: getTypeColor(item.type),
-                        borderColor: '#000000',
+                        backgroundColor: colors.surfaceAlt,
+                        borderColor: colors.border,
+                        borderWidth: colors.borderWidth,
+                        borderRadius: radii.sm,
                       },
                     ]}
                   >
-                    <Ionicons name={getIconForType(item.type)} size={16} color="#000000" />
+                    <Feather
+                      name={getIconForType(item.type) as any}
+                      size={16}
+                      color="#000000"
+                    />
                   </View>
                   <View style={styles.resultText}>
-                    <Text style={[styles.itemTitle, { color: colors.onSurface }]}>
+                    <Text
+                      style={[
+                        styles.itemTitle,
+                        { color: colors.text, fontSize: typography.sizes.base },
+                      ]}
+                    >
                       {item.title}
                     </Text>
                     {item.subtitle ? (
                       <Text
-                        style={[styles.itemSub, { color: isDark ? '#A0A0A0' : '#555555' }]}
+                        style={[
+                          styles.itemSub,
+                          {
+                            color: colors.textMuted,
+                            fontSize: typography.sizes.xs,
+                          },
+                        ]}
                         numberOfLines={1}
                       >
                         {item.subtitle}
                       </Text>
                     ) : null}
                   </View>
-                  <View style={styles.typeBadge}>
-                    <Text style={styles.typeBadgeText}>{item.type.toUpperCase()}</Text>
+                  <View
+                    style={[
+                      styles.typeBadge,
+                      {
+                        backgroundColor: colors.surfaceAlt,
+                        borderColor: colors.border,
+                        borderWidth: colors.borderWidth,
+                        borderRadius: radii.sm,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.typeBadgeText,
+                        { color: colors.text, fontSize: typography.sizes.xs },
+                      ]}
+                    >
+                      {item.type.toUpperCase()}
+                    </Text>
                   </View>
                 </View>
               </M3Card>
@@ -208,46 +290,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingBottom: 14,
-    borderBottomWidth: 2.5,
+    paddingTop: 8,
   },
   inputWrapper: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     height: 48,
-    borderWidth: 2,
-    borderRadius: 8,
     marginRight: 10,
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
   },
   searchInput: {
     flex: 1,
     height: 48,
     paddingHorizontal: 10,
-    fontFamily: 'SpaceMono',
-    fontSize: 12,
+    fontWeight: '600',
   },
   clearBtn: {
     padding: 8,
   },
   cancelBtn: {
-    borderWidth: 2,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
+    height: 48,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cancelText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#000000',
+    fontWeight: '800',
   },
   resultsScroll: {
     padding: 16,
@@ -258,13 +326,10 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   emptyTitle: {
-    fontFamily: 'SpaceMono',
-    fontSize: 14,
-    fontWeight: '900',
+    fontWeight: '800',
     marginTop: 12,
   },
   emptySub: {
-    fontSize: 12,
     fontWeight: '500',
     marginTop: 4,
     textAlign: 'center',
@@ -277,10 +342,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 6,
-    borderWidth: 1.5,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -289,28 +352,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   itemTitle: {
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
     fontWeight: '700',
   },
   itemSub: {
-    fontSize: 11,
     fontWeight: '500',
     marginTop: 2,
   },
   typeBadge: {
-    borderWidth: 1.5,
-    borderColor: '#000000',
-    borderRadius: 4,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    backgroundColor: '#FFFFFF',
     marginLeft: 6,
   },
   typeBadgeText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 8,
-    fontWeight: '700',
-    color: '#000000',
+    fontWeight: '800',
   },
 });

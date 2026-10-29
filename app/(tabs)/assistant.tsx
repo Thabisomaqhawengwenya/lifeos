@@ -9,24 +9,31 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { M3Header } from '@/src/components/ui/M3Header';
 import { M3Card } from '@/src/components/ui/M3Card';
 import { M3Button } from '@/src/components/ui/M3Button';
 import { M3Chip } from '@/src/components/ui/M3Chip';
 import { haptic } from '@/src/design-system/haptics';
-import { AIAssistantService, ProposedAIAction, AssistantMessage } from '@/src/services/AIAssistantService';
+import {
+  AIAssistantService,
+  ProposedAIAction,
+  AssistantMessage,
+} from '@/src/services/AIAssistantService';
 
 export default function AssistantScreen() {
-  const { colors, spacing, isDark } = useAppTheme();
+  const { colors, spacing, typography, radii, shadowSmall, isDark } = useAppTheme();
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState<AssistantMessage[]>([
     {
       id: 'msg-init',
       sender: 'assistant',
       text: 'Hello Mr Q! I am your LifeOS offline workspace assistant. Command me to schedule tasks, track habit routines, log expenses, or organize your day.',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
     },
   ]);
   const [activeAction, setActiveAction] = useState<ProposedAIAction | null>(null);
@@ -34,7 +41,7 @@ export default function AssistantScreen() {
   const promptSuggestions = [
     'Remind me to call accountant tomorrow at 9 AM',
     'Spent $45 on groceries',
-    'Urgent task: review database index',
+    'High priority task: review database index',
     'Track habit: Morning Deep Work',
     'Note: LifeOS Neo-Brutalism architecture',
   ];
@@ -50,7 +57,10 @@ export default function AssistantScreen() {
       id: `usr_${Date.now()}`,
       sender: 'user',
       text: userText,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
     };
 
     const result = AIAssistantService.parseUserInput(userText);
@@ -59,7 +69,10 @@ export default function AssistantScreen() {
       id: `ast_${Date.now()}`,
       sender: 'assistant',
       text: result.responseText,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
       action: result.action,
     };
 
@@ -81,21 +94,21 @@ export default function AssistantScreen() {
     setActiveAction(null);
   };
 
-  const shadowColor = isDark ? '#FFFFFF' : '#000000';
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <M3Header
-        badge="NEO-BRUTALIST • AI COMPANION"
         title="AI Assistant"
-        subtitle="Safe, offline heuristic natural-language partner"
+        subtitle="Offline natural-language life organizer"
       />
 
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.base }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingHorizontal: spacing.grid2 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Chat Stream */}
@@ -111,26 +124,57 @@ export default function AssistantScreen() {
               <View
                 style={[
                   styles.avatarBox,
-                  { backgroundColor: colors.accentYellow, borderColor: colors.border },
+                  {
+                    backgroundColor: colors.purple,
+                    borderColor: colors.border,
+                    borderWidth: colors.borderWidth,
+                    borderRadius: radii.sm,
+                  },
                 ]}
               >
-                <Ionicons name="sparkles" size={14} color="#000000" />
+                <Feather name="cpu" size={16} color="#000000" />
               </View>
             )}
             <View
               style={[
                 styles.bubble,
                 {
-                  backgroundColor: msg.sender === 'user' ? colors.accentYellow : colors.surface,
+                  backgroundColor:
+                    msg.sender === 'user' ? colors.yellow : colors.surface,
                   borderColor: colors.border,
-                  shadowColor,
+                  borderWidth: colors.borderWidth,
+                  borderRadius: radii.md,
+                  shadowColor: shadowSmall.shadowColor,
+                  shadowOffset: shadowSmall.shadowOffset,
+                  shadowOpacity: shadowSmall.shadowOpacity,
+                  shadowRadius: shadowSmall.shadowRadius,
+                  elevation: shadowSmall.elevation,
                 },
               ]}
             >
-              <Text style={styles.bubbleText}>
+              <Text
+                style={[
+                  styles.bubbleText,
+                  {
+                    color: '#000000',
+                    fontSize: typography.sizes.sm,
+                  },
+                ]}
+              >
                 {msg.text}
               </Text>
-              <Text style={styles.timestampText}>{msg.timestamp}</Text>
+              <Text
+                style={[
+                  styles.timestampText,
+                  {
+                    color: '#555555',
+                    fontSize: typography.sizes.xs,
+                    fontFamily: typography.fonts.numeric,
+                  },
+                ]}
+              >
+                {msg.timestamp}
+              </Text>
             </View>
           </View>
         ))}
@@ -138,11 +182,14 @@ export default function AssistantScreen() {
         {/* Action Safety Preview Card */}
         {activeAction && (
           <M3Card
-            variant="lilac"
+            stripe="purple"
             style={[
               styles.actionCard,
               {
-                borderColor: activeAction.status === 'applied' ? colors.accentJade : colors.border,
+                borderColor:
+                  activeAction.status === 'applied'
+                    ? colors.mint
+                    : colors.border,
               },
             ]}
           >
@@ -153,26 +200,50 @@ export default function AssistantScreen() {
                   {
                     backgroundColor:
                       activeAction.status === 'applied'
-                        ? colors.accentJade
-                        : colors.accentYellow,
+                        ? colors.mint
+                        : colors.purple,
+                    borderColor: colors.border,
+                    borderWidth: colors.borderWidth,
+                    borderRadius: radii.sm,
                   },
                 ]}
               >
-                <Ionicons
-                  name={activeAction.status === 'applied' ? 'checkmark-circle' : 'shield-checkmark'}
+                <Feather
+                  name={
+                    activeAction.status === 'applied'
+                      ? 'check-circle'
+                      : 'shield'
+                  }
                   size={14}
                   color="#000000"
                 />
-                <Text style={styles.actionBadgeText}>
-                  {activeAction.status === 'applied' ? 'SAVED TO SQLITE' : 'PROPOSED ACTION'}
+                <Text
+                  style={[
+                    styles.actionBadgeText,
+                    { color: '#000000', fontSize: typography.sizes.xs },
+                  ]}
+                >
+                  {activeAction.status === 'applied'
+                    ? 'SAVED TO SQLITE'
+                    : 'PROPOSED ACTION'}
                 </Text>
               </View>
             </View>
 
-            <Text style={styles.actionTitle}>
+            <Text
+              style={[
+                styles.actionTitle,
+                { color: colors.text, fontSize: typography.sizes.base },
+              ]}
+            >
               {activeAction.title}
             </Text>
-            <Text style={styles.actionDetails}>
+            <Text
+              style={[
+                styles.actionDetails,
+                { color: colors.textMuted, fontSize: typography.sizes.xs },
+              ]}
+            >
               {activeAction.details}
             </Text>
 
@@ -181,22 +252,39 @@ export default function AssistantScreen() {
                 <M3Button
                   title="CONFIRM & APPLY"
                   onPress={handleConfirmAction}
-                  variant="filled"
-                  size="small"
+                  variant="primary"
+                  size="sm"
                   style={{ flex: 1 }}
                 />
                 <M3Button
                   title="CANCEL"
                   onPress={handleCancelAction}
-                  variant="tonal"
-                  size="small"
+                  variant="secondary"
+                  size="sm"
                   style={{ flex: 1 }}
                 />
               </View>
             ) : (
-              <View style={styles.appliedBanner}>
-                <Ionicons name="checkmark-done" size={16} color="#000000" />
-                <Text style={styles.appliedBannerText}>ACTION COMMITTED TO LOCAL DATABASE</Text>
+              <View
+                style={[
+                  styles.appliedBanner,
+                  {
+                    backgroundColor: colors.mint,
+                    borderColor: colors.border,
+                    borderWidth: colors.borderWidth,
+                    borderRadius: radii.sm,
+                  },
+                ]}
+              >
+                <Feather name="check" size={16} color="#000000" />
+                <Text
+                  style={[
+                    styles.appliedBannerText,
+                    { color: '#000000', fontSize: typography.sizes.xs },
+                  ]}
+                >
+                  ACTION COMMITTED TO LOCAL DATABASE
+                </Text>
               </View>
             )}
           </M3Card>
@@ -204,10 +292,19 @@ export default function AssistantScreen() {
 
         {/* Quick Suggestion Chips */}
         <View style={styles.suggestionsContainer}>
-          <Text style={styles.suggestionTitle}>
+          <Text
+            style={[
+              styles.suggestionTitle,
+              { color: colors.text, fontSize: typography.sizes.xs },
+            ]}
+          >
             EXAMPLE COMMANDS:
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestionScroll}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.suggestionScroll}
+          >
             {promptSuggestions.map((prompt, idx) => (
               <M3Chip
                 key={idx}
@@ -216,7 +313,6 @@ export default function AssistantScreen() {
                   haptic.selection();
                   setInputText(prompt);
                 }}
-                colorScheme="yellow"
               />
             ))}
           </ScrollView>
@@ -232,6 +328,7 @@ export default function AssistantScreen() {
           {
             backgroundColor: colors.surface,
             borderTopColor: colors.border,
+            borderTopWidth: colors.borderWidth,
           },
         ]}
       >
@@ -245,7 +342,10 @@ export default function AssistantScreen() {
             {
               backgroundColor: colors.background,
               borderColor: colors.border,
-              color: colors.onBackground,
+              borderWidth: colors.borderWidth,
+              borderRadius: radii.sm,
+              color: colors.text,
+              fontSize: typography.sizes.sm,
             },
           ]}
           onSubmitEditing={handleSend}
@@ -255,15 +355,21 @@ export default function AssistantScreen() {
           style={[
             styles.sendButton,
             {
-              backgroundColor: colors.accentYellow,
+              backgroundColor: colors.yellow,
               borderColor: colors.border,
-              shadowColor,
+              borderWidth: colors.borderWidth,
+              borderRadius: radii.sm,
+              shadowColor: shadowSmall.shadowColor,
+              shadowOffset: shadowSmall.shadowOffset,
+              shadowOpacity: shadowSmall.shadowOpacity,
+              shadowRadius: shadowSmall.shadowRadius,
+              elevation: shadowSmall.elevation,
             },
           ]}
           accessibilityRole="button"
           accessibilityLabel="Send command"
         >
-          <Ionicons name="arrow-up" size={20} color="#000000" />
+          <Feather name="arrow-up" size={20} color="#000000" />
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -280,8 +386,8 @@ const styles = StyleSheet.create({
   },
   messageRow: {
     flexDirection: 'row',
+    marginBottom: 14,
     alignItems: 'flex-start',
-    marginBottom: 12,
   },
   userRow: {
     justifyContent: 'flex-end',
@@ -290,10 +396,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   avatarBox: {
-    width: 28,
-    height: 28,
-    borderWidth: 2,
-    borderRadius: 6,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
@@ -301,26 +405,13 @@ const styles = StyleSheet.create({
   },
   bubble: {
     maxWidth: '82%',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderWidth: 2,
-    borderRadius: 8,
-    shadowOffset: { width: 3, height: 3 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 3,
+    padding: 12,
   },
   bubbleText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#000000',
-    lineHeight: 18,
+    fontWeight: '600',
+    lineHeight: 20,
   },
   timestampText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 9,
-    color: '#555555',
     marginTop: 4,
     alignSelf: 'flex-end',
   },
@@ -329,38 +420,24 @@ const styles = StyleSheet.create({
   },
   actionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    marginBottom: 8,
   },
   actionBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#000000',
-    borderRadius: 4,
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
     gap: 4,
   },
   actionBadgeText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#000000',
+    fontWeight: '800',
   },
   actionTitle: {
-    fontFamily: 'SpaceMono',
-    fontSize: 15,
-    fontWeight: '900',
-    color: '#000000',
-    marginTop: 8,
+    fontWeight: '700',
   },
   actionDetails: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#222222',
+    fontWeight: '500',
     marginTop: 4,
-    lineHeight: 16,
   },
   actionButtonsRow: {
     flexDirection: 'row',
@@ -370,28 +447,19 @@ const styles = StyleSheet.create({
   appliedBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#70E4BA',
-    borderWidth: 1.5,
-    borderColor: '#000000',
-    borderRadius: 4,
     padding: 8,
-    marginTop: 12,
     gap: 6,
+    marginTop: 12,
   },
   appliedBannerText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#000000',
+    fontWeight: '800',
   },
   suggestionsContainer: {
     marginTop: 16,
   },
   suggestionTitle: {
-    fontFamily: 'SpaceMono',
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#000000',
+    fontWeight: '800',
+    letterSpacing: 0.5,
     marginBottom: 8,
   },
   suggestionScroll: {
@@ -401,29 +469,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 2.5,
+    paddingVertical: 10,
+    gap: 8,
   },
   textInput: {
     flex: 1,
     height: 48,
-    borderWidth: 2,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
+    paddingHorizontal: 12,
+    fontWeight: '600',
   },
   sendButton: {
     width: 48,
     height: 48,
-    borderWidth: 2,
-    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 10,
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 3,
   },
 });

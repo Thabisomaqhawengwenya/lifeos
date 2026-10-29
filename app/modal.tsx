@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { M3Button } from '@/src/components/ui/M3Button';
 import { M3Chip } from '@/src/components/ui/M3Chip';
@@ -24,7 +24,7 @@ import { NotificationService } from '@/src/services/NotificationService';
 type CaptureType = 'task' | 'note' | 'reminder' | 'expense';
 
 export default function QuickCaptureModal() {
-  const { colors, spacing, isDark } = useAppTheme();
+  const { colors, spacing, typography, radii, shadowSmall, isDark } = useAppTheme();
   const [captureType, setCaptureType] = useState<CaptureType>('task');
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
@@ -81,23 +81,41 @@ export default function QuickCaptureModal() {
     }
   };
 
-  const shadowColor = isDark ? '#FFFFFF' : '#000000';
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       {/* Header Bar */}
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: colors.surface,
+            borderBottomColor: colors.border,
+            borderBottomWidth: colors.borderWidth,
+          },
+        ]}
+      >
         <View style={styles.headerLeft}>
-          <Text style={[styles.headerTitle, { color: colors.onBackground }]}>
+          <Text
+            style={[
+              styles.headerTitle,
+              { color: colors.text, fontSize: typography.sizes.lg },
+            ]}
+          >
             QUICK CAPTURE
           </Text>
-          <Text style={[styles.headerSub, { color: isDark ? '#A0A0A0' : '#555555' }]}>
+          <Text
+            style={[
+              styles.headerSub,
+              { color: colors.textMuted, fontSize: typography.sizes.xs },
+            ]}
+          >
             Direct persistence to local SQLite
           </Text>
         </View>
+
         <Pressable
           onPress={() => router.back()}
           style={[
@@ -105,51 +123,64 @@ export default function QuickCaptureModal() {
             {
               backgroundColor: colors.surface,
               borderColor: colors.border,
-              shadowColor,
+              borderWidth: colors.borderWidth,
+              borderRadius: radii.sm,
+              shadowColor: shadowSmall.shadowColor,
+              shadowOffset: shadowSmall.shadowOffset,
+              shadowOpacity: shadowSmall.shadowOpacity,
+              shadowRadius: shadowSmall.shadowRadius,
+              elevation: shadowSmall.elevation,
             },
           ]}
           accessibilityRole="button"
           accessibilityLabel="Close"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="close" size={20} color={colors.onBackground} />
+          <Feather name="x" size={20} color={colors.text} />
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.content, { padding: spacing.base }]}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { padding: spacing.grid2 },
+        ]}
+      >
         {/* Type Selector Chips */}
         <View style={styles.typesRow}>
           <M3Chip
             label="TASK"
             selected={captureType === 'task'}
             onPress={() => setCaptureType('task')}
-            colorScheme="yellow"
-            icon={<Ionicons name="checkbox-outline" size={14} color="#000000" />}
+            icon={<Feather name="check-square" size={14} color="#000000" />}
           />
           <M3Chip
             label="NOTE"
             selected={captureType === 'note'}
             onPress={() => setCaptureType('note')}
-            colorScheme="sky"
-            icon={<Ionicons name="document-text-outline" size={14} color="#000000" />}
+            icon={<Feather name="file-text" size={14} color="#000000" />}
           />
           <M3Chip
             label="REMINDER"
             selected={captureType === 'reminder'}
             onPress={() => setCaptureType('reminder')}
-            colorScheme="coral"
-            icon={<Ionicons name="alarm-outline" size={14} color="#000000" />}
+            icon={<Feather name="bell" size={14} color="#000000" />}
           />
           <M3Chip
             label="EXPENSE"
             selected={captureType === 'expense'}
             onPress={() => setCaptureType('expense')}
-            colorScheme="mint"
-            icon={<Ionicons name="cash-outline" size={14} color="#000000" />}
+            icon={<Feather name="dollar-sign" size={14} color="#000000" />}
           />
         </View>
 
         {/* Title Input */}
-        <Text style={[styles.inputLabel, { color: colors.onBackground }]}>
+        <Text
+          style={[
+            styles.inputLabel,
+            { color: colors.text, fontSize: typography.sizes.xs },
+          ]}
+        >
           {captureType === 'task'
             ? 'TASK TITLE'
             : captureType === 'note'
@@ -163,12 +194,12 @@ export default function QuickCaptureModal() {
           onChangeText={setTitle}
           placeholder={
             captureType === 'task'
-              ? 'e.g. Neo-Brutalism UI Polish'
+              ? 'e.g. LifeOS UI verification'
               : captureType === 'note'
-              ? 'e.g. LifeOS System Architecture'
+              ? 'e.g. System architecture notes'
               : captureType === 'reminder'
               ? 'e.g. Check server backups'
-              : 'e.g. Coffee & sandwich'
+              : 'e.g. Coffee & lunch'
           }
           placeholderTextColor="#888888"
           style={[
@@ -176,7 +207,10 @@ export default function QuickCaptureModal() {
             {
               backgroundColor: colors.surface,
               borderColor: colors.border,
-              color: colors.onSurface,
+              borderWidth: colors.borderWidth,
+              borderRadius: radii.sm,
+              color: colors.text,
+              fontSize: typography.sizes.sm,
             },
           ]}
           autoFocus
@@ -185,7 +219,12 @@ export default function QuickCaptureModal() {
         {/* Amount field for Expense */}
         {captureType === 'expense' && (
           <>
-            <Text style={[styles.inputLabel, { color: colors.onBackground }]}>
+            <Text
+              style={[
+                styles.inputLabel,
+                { color: colors.text, fontSize: typography.sizes.xs },
+              ]}
+            >
               AMOUNT ($)
             </Text>
             <TextInput
@@ -199,7 +238,10 @@ export default function QuickCaptureModal() {
                 {
                   backgroundColor: colors.surface,
                   borderColor: colors.border,
-                  color: colors.onSurface,
+                  borderWidth: colors.borderWidth,
+                  borderRadius: radii.sm,
+                  color: colors.text,
+                  fontSize: typography.sizes.sm,
                 },
               ]}
             />
@@ -209,54 +251,75 @@ export default function QuickCaptureModal() {
         {/* Priority field for Task */}
         {captureType === 'task' && (
           <>
-            <Text style={[styles.inputLabel, { color: colors.onBackground }]}>
+            <Text
+              style={[
+                styles.inputLabel,
+                { color: colors.text, fontSize: typography.sizes.xs },
+              ]}
+            >
               PRIORITY LEVEL
             </Text>
             <View style={styles.priorityRow}>
-              {(['low', 'medium', 'high'] as const).map((p) => (
-                <Pressable
-                  key={p}
-                  onPress={() => setPriority(p)}
-                  style={[
-                    styles.priorityBtn,
-                    {
-                      backgroundColor:
-                        priority === p
-                          ? p === 'high'
-                            ? colors.accentRed
-                            : p === 'medium'
-                            ? colors.accentYellow
-                            : colors.accentSky
-                          : colors.surface,
-                      borderColor: colors.border,
-                    },
-                    priority === p && {
-                      shadowColor,
-                      shadowOffset: { width: 2, height: 2 },
-                      shadowOpacity: 1,
-                      shadowRadius: 0,
-                      elevation: 2,
-                    },
-                  ]}
-                >
-                  <Text
+              {(['low', 'medium', 'high'] as const).map((p) => {
+                const isSelected = priority === p;
+                let activeBg = colors.surfaceAlt;
+                if (isSelected) {
+                  activeBg =
+                    p === 'high'
+                      ? colors.pink
+                      : p === 'medium'
+                      ? colors.yellow
+                      : colors.blue;
+                }
+                return (
+                  <Pressable
+                    key={p}
+                    onPress={() => setPriority(p)}
                     style={[
-                      styles.priorityBtnText,
+                      styles.priorityBtn,
                       {
-                        color: priority === p && p === 'high' ? '#FFFFFF' : '#000000',
+                        backgroundColor: activeBg,
+                        borderColor: colors.border,
+                        borderWidth: colors.borderWidth,
+                        borderRadius: radii.sm,
+                        shadowColor: isSelected
+                          ? shadowSmall.shadowColor
+                          : 'transparent',
+                        shadowOffset: shadowSmall.shadowOffset,
+                        shadowOpacity: shadowSmall.shadowOpacity,
+                        shadowRadius: shadowSmall.shadowRadius,
+                        elevation: isSelected ? shadowSmall.elevation : 0,
                       },
                     ]}
                   >
-                    {p.toUpperCase()}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text
+                      style={[
+                        styles.priorityBtnText,
+                        {
+                          color:
+                            isSelected && p === 'high'
+                              ? '#FFFFFF'
+                              : '#000000',
+                          fontSize: typography.sizes.xs,
+                        },
+                      ]}
+                    >
+                      {p.toUpperCase()}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </>
         )}
 
         {/* Description / Notes field */}
-        <Text style={[styles.inputLabel, { color: colors.onBackground }]}>
+        <Text
+          style={[
+            styles.inputLabel,
+            { color: colors.text, fontSize: typography.sizes.xs },
+          ]}
+        >
           ADDITIONAL NOTES / CONTEXT
         </Text>
         <TextInput
@@ -271,7 +334,10 @@ export default function QuickCaptureModal() {
             {
               backgroundColor: colors.surface,
               borderColor: colors.border,
-              color: colors.onSurface,
+              borderWidth: colors.borderWidth,
+              borderRadius: radii.sm,
+              color: colors.text,
+              fontSize: typography.sizes.sm,
             },
           ]}
         />
@@ -280,10 +346,10 @@ export default function QuickCaptureModal() {
           <M3Button
             title={isSubmitting ? 'SAVING...' : 'SAVE TO SQLITE'}
             onPress={handleSave}
-            variant="filled"
-            size="large"
+            variant="primary"
+            size="lg"
             loading={isSubmitting}
-            icon={<Ionicons name="checkmark-circle" size={20} color="#000000" />}
+            icon={<Feather name="check" size={18} color="#000000" />}
           />
         </View>
       </ScrollView>
@@ -302,32 +368,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 24,
     paddingBottom: 16,
-    borderBottomWidth: 2.5,
   },
   headerLeft: {
     flex: 1,
   },
   headerTitle: {
-    fontFamily: 'SpaceMono',
-    fontSize: 18,
-    fontWeight: '900',
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   headerSub: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
     marginTop: 2,
   },
   closeButton: {
-    width: 36,
-    height: 36,
-    borderWidth: 2,
-    borderRadius: 8,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
   },
   content: {
     paddingBottom: 40,
@@ -339,8 +396,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   inputLabel: {
-    fontFamily: 'SpaceMono',
-    fontSize: 11,
     fontWeight: '700',
     marginTop: 16,
     marginBottom: 6,
@@ -348,11 +403,8 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 48,
-    borderWidth: 2,
-    borderRadius: 8,
     paddingHorizontal: 14,
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
+    fontWeight: '600',
   },
   priorityRow: {
     flexDirection: 'row',
@@ -360,24 +412,17 @@ const styles = StyleSheet.create({
   },
   priorityBtn: {
     flex: 1,
-    borderWidth: 2,
-    borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
   },
   priorityBtnText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   textArea: {
     minHeight: 80,
-    borderWidth: 2,
-    borderRadius: 8,
     paddingHorizontal: 14,
     paddingTop: 12,
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
+    fontWeight: '500',
     textAlignVertical: 'top',
   },
 });

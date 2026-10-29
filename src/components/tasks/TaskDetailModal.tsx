@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { M3Button } from '@/src/components/ui/M3Button';
 import { haptic } from '@/src/design-system/haptics';
@@ -29,7 +29,7 @@ export function TaskDetailModal({
   onClose,
   onUpdated,
 }: TaskDetailModalProps) {
-  const { colors, spacing, radii, isDark } = useAppTheme();
+  const { colors, spacing, typography, radii, shadowSmall, isDark } = useAppTheme();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
@@ -105,8 +105,6 @@ export function TaskDetailModal({
     onClose();
   };
 
-  const shadowColor = isDark ? '#FFFFFF' : '#000000';
-
   return (
     <Modal
       visible={visible}
@@ -126,16 +124,36 @@ export function TaskDetailModal({
             {
               backgroundColor: colors.surface,
               borderColor: colors.border,
+              borderWidth: colors.borderWidth,
+              borderRadius: radii.lg,
             },
           ]}
         >
           {/* Header */}
-          <View style={[styles.headerRow, { borderBottomColor: colors.border }]}>
+          <View
+            style={[
+              styles.headerRow,
+              {
+                borderBottomColor: colors.border,
+                borderBottomWidth: colors.borderWidth,
+              },
+            ]}
+          >
             <View>
-              <Text style={[styles.headerTitle, { color: colors.onSurface }]}>
-                DELIVERABLE DETAILS
+              <Text
+                style={[
+                  styles.headerTitle,
+                  { color: colors.text, fontSize: typography.sizes.base },
+                ]}
+              >
+                TASK DETAILS
               </Text>
-              <Text style={[styles.headerSub, { color: isDark ? '#A0A0A0' : '#555555' }]}>
+              <Text
+                style={[
+                  styles.headerSub,
+                  { color: colors.textMuted, fontSize: typography.sizes.xs },
+                ]}
+              >
                 Category: {task.category.toUpperCase()}
               </Text>
             </View>
@@ -146,18 +164,34 @@ export function TaskDetailModal({
                 {
                   backgroundColor: colors.surface,
                   borderColor: colors.border,
-                  shadowColor,
+                  borderWidth: colors.borderWidth,
+                  borderRadius: radii.sm,
+                  shadowColor: shadowSmall.shadowColor,
+                  shadowOffset: shadowSmall.shadowOffset,
+                  shadowOpacity: shadowSmall.shadowOpacity,
+                  shadowRadius: shadowSmall.shadowRadius,
+                  elevation: shadowSmall.elevation,
                 },
               ]}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Ionicons name="close" size={20} color={colors.onSurface} />
+              <Feather name="x" size={20} color={colors.text} />
             </Pressable>
           </View>
 
-          <ScrollView style={styles.scrollBody} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.scrollBody}
+            showsVerticalScrollIndicator={false}
+          >
             {/* Title */}
-            <Text style={[styles.fieldLabel, { color: colors.onSurface }]}>TITLE</Text>
+            <Text
+              style={[
+                styles.fieldLabel,
+                { color: colors.text, fontSize: typography.sizes.xs },
+              ]}
+            >
+              TITLE
+            </Text>
             <TextInput
               value={title}
               onChangeText={setTitle}
@@ -166,13 +200,23 @@ export function TaskDetailModal({
                 {
                   backgroundColor: colors.background,
                   borderColor: colors.border,
-                  color: colors.onSurface,
+                  borderWidth: colors.borderWidth,
+                  borderRadius: radii.sm,
+                  color: colors.text,
+                  fontSize: typography.sizes.sm,
                 },
               ]}
             />
 
             {/* Description */}
-            <Text style={[styles.fieldLabel, { color: colors.onSurface }]}>DESCRIPTION</Text>
+            <Text
+              style={[
+                styles.fieldLabel,
+                { color: colors.text, fontSize: typography.sizes.xs },
+              ]}
+            >
+              DESCRIPTION
+            </Text>
             <TextInput
               value={description}
               onChangeText={setDescription}
@@ -185,54 +229,85 @@ export function TaskDetailModal({
                 {
                   backgroundColor: colors.background,
                   borderColor: colors.border,
-                  color: colors.onSurface,
+                  borderWidth: colors.borderWidth,
+                  borderRadius: radii.sm,
+                  color: colors.text,
+                  fontSize: typography.sizes.sm,
                 },
               ]}
             />
 
             {/* Priority Picker */}
-            <Text style={[styles.fieldLabel, { color: colors.onSurface }]}>PRIORITY</Text>
+            <Text
+              style={[
+                styles.fieldLabel,
+                { color: colors.text, fontSize: typography.sizes.xs },
+              ]}
+            >
+              PRIORITY
+            </Text>
             <View style={styles.priorityRow}>
-              {(['low', 'medium', 'high'] as const).map((p) => (
-                <Pressable
-                  key={p}
-                  onPress={() => setPriority(p)}
-                  style={[
-                    styles.priorityBtn,
-                    {
-                      backgroundColor:
-                        priority === p
-                          ? p === 'high'
-                            ? colors.accentRed
-                            : p === 'medium'
-                            ? colors.accentYellow
-                            : colors.accentSky
-                          : colors.surface,
-                      borderColor: colors.border,
-                    },
-                    priority === p && {
-                      shadowColor,
-                      shadowOffset: { width: 2, height: 2 },
-                      shadowOpacity: 1,
-                      shadowRadius: 0,
-                      elevation: 2,
-                    },
-                  ]}
-                >
-                  <Text
+              {(['low', 'medium', 'high'] as const).map((p) => {
+                const isSelected = priority === p;
+                let activeBg = colors.surfaceAlt;
+                if (isSelected) {
+                  activeBg =
+                    p === 'high'
+                      ? colors.pink
+                      : p === 'medium'
+                      ? colors.yellow
+                      : colors.blue;
+                }
+
+                return (
+                  <Pressable
+                    key={p}
+                    onPress={() => setPriority(p)}
                     style={[
-                      styles.priorityBtnText,
-                      { color: priority === p && p === 'high' ? '#FFFFFF' : '#000000' },
+                      styles.priorityBtn,
+                      {
+                        backgroundColor: activeBg,
+                        borderColor: colors.border,
+                        borderWidth: colors.borderWidth,
+                        borderRadius: radii.sm,
+                        shadowColor: isSelected
+                          ? shadowSmall.shadowColor
+                          : 'transparent',
+                        shadowOffset: shadowSmall.shadowOffset,
+                        shadowOpacity: shadowSmall.shadowOpacity,
+                        shadowRadius: shadowSmall.shadowRadius,
+                        elevation: isSelected ? shadowSmall.elevation : 0,
+                      },
                     ]}
                   >
-                    {p.toUpperCase()}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text
+                      style={[
+                        styles.priorityBtnText,
+                        {
+                          color:
+                            isSelected && p === 'high'
+                              ? '#FFFFFF'
+                              : '#000000',
+                          fontSize: typography.sizes.xs,
+                        },
+                      ]}
+                    >
+                      {p.toUpperCase()}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
 
             {/* Due Date */}
-            <Text style={[styles.fieldLabel, { color: colors.onSurface }]}>DUE DATE</Text>
+            <Text
+              style={[
+                styles.fieldLabel,
+                { color: colors.text, fontSize: typography.sizes.xs },
+              ]}
+            >
+              DUE DATE
+            </Text>
             <TextInput
               value={dueDate}
               onChangeText={setDueDate}
@@ -243,15 +318,29 @@ export function TaskDetailModal({
                 {
                   backgroundColor: colors.background,
                   borderColor: colors.border,
-                  color: colors.onSurface,
+                  borderWidth: colors.borderWidth,
+                  borderRadius: radii.sm,
+                  color: colors.text,
+                  fontSize: typography.sizes.sm,
                 },
               ]}
             />
 
             {/* Subtasks Checklist */}
             <View style={styles.subtasksHeaderRow}>
-              <Text style={[styles.fieldLabel, { color: colors.onSurface, marginTop: 0 }]}>
-                SUBTASKS CHECKLIST ({subtasks.filter((s) => s.is_completed).length}/{subtasks.length})
+              <Text
+                style={[
+                  styles.fieldLabel,
+                  {
+                    color: colors.text,
+                    fontSize: typography.sizes.xs,
+                    marginTop: 0,
+                  },
+                ]}
+              >
+                SUBTASKS (
+                {subtasks.filter((s) => s.is_completed).length}/{subtasks.length}
+                )
               </Text>
             </View>
 
@@ -262,19 +351,28 @@ export function TaskDetailModal({
                   style={[
                     styles.subtaskCheckbox,
                     {
-                      borderColor: '#000000',
-                      backgroundColor: st.is_completed ? colors.accentYellow : colors.surface,
+                      borderColor: colors.border,
+                      borderWidth: colors.borderWidth,
+                      borderRadius: radii.sm,
+                      backgroundColor: st.is_completed
+                        ? colors.yellow
+                        : colors.surface,
                     },
                   ]}
                 >
-                  {st.is_completed && <Ionicons name="checkmark" size={14} color="#000000" />}
+                  {st.is_completed && (
+                    <Feather name="check" size={14} color="#000000" />
+                  )}
                 </Pressable>
                 <Text
                   style={[
                     styles.subtaskTitle,
                     {
-                      color: colors.onSurface,
-                      textDecorationLine: st.is_completed ? 'line-through' : 'none',
+                      color: colors.text,
+                      fontSize: typography.sizes.xs,
+                      textDecorationLine: st.is_completed
+                        ? 'line-through'
+                        : 'none',
                     },
                   ]}
                 >
@@ -283,8 +381,9 @@ export function TaskDetailModal({
                 <Pressable
                   onPress={() => handleDeleteSubtask(st.id)}
                   style={styles.deleteSubtaskBtn}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Ionicons name="trash-outline" size={16} color={colors.accentRed} />
+                  <Feather name="trash-2" size={16} color={colors.pink} />
                 </Pressable>
               </View>
             ))}
@@ -300,7 +399,10 @@ export function TaskDetailModal({
                   {
                     backgroundColor: colors.background,
                     borderColor: colors.border,
-                    color: colors.onSurface,
+                    borderWidth: colors.borderWidth,
+                    borderRadius: radii.sm,
+                    color: colors.text,
+                    fontSize: typography.sizes.xs,
                   },
                 ]}
                 onSubmitEditing={handleAddSubtask}
@@ -310,13 +412,19 @@ export function TaskDetailModal({
                 style={[
                   styles.addSubtaskBtn,
                   {
-                    backgroundColor: colors.accentYellow,
+                    backgroundColor: colors.yellow,
                     borderColor: colors.border,
-                    shadowColor,
+                    borderWidth: colors.borderWidth,
+                    borderRadius: radii.sm,
+                    shadowColor: shadowSmall.shadowColor,
+                    shadowOffset: shadowSmall.shadowOffset,
+                    shadowOpacity: shadowSmall.shadowOpacity,
+                    shadowRadius: shadowSmall.shadowRadius,
+                    elevation: shadowSmall.elevation,
                   },
                 ]}
               >
-                <Ionicons name="add" size={20} color="#000000" />
+                <Feather name="plus" size={18} color="#000000" />
               </Pressable>
             </View>
 
@@ -325,15 +433,15 @@ export function TaskDetailModal({
               <M3Button
                 title={isSaving ? 'SAVING...' : 'SAVE CHANGES'}
                 onPress={handleSave}
-                variant="filled"
-                size="medium"
+                variant="primary"
+                size="md"
                 loading={isSaving}
               />
               <M3Button
-                title="DELETE DELIVERABLE"
+                title="DELETE TASK"
                 onPress={handleDeleteTask}
                 variant="destructive"
-                size="small"
+                size="sm"
                 style={{ marginTop: 8 }}
               />
             </View>
@@ -356,10 +464,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheetContainer: {
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    borderWidth: 2.5,
-    borderBottomWidth: 0,
     maxHeight: '88%',
     paddingTop: 16,
   },
@@ -369,38 +473,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingBottom: 14,
-    borderBottomWidth: 2.5,
   },
   headerTitle: {
-    fontFamily: 'SpaceMono',
-    fontSize: 16,
-    fontWeight: '900',
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   headerSub: {
-    fontFamily: 'SpaceMono',
-    fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '600',
     marginTop: 2,
   },
   closeButton: {
-    width: 34,
-    height: 34,
-    borderWidth: 2,
-    borderRadius: 6,
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
   },
   scrollBody: {
     paddingHorizontal: 16,
     paddingTop: 16,
   },
   fieldLabel: {
-    fontFamily: 'SpaceMono',
-    fontSize: 11,
     fontWeight: '700',
     marginTop: 14,
     marginBottom: 6,
@@ -408,20 +500,14 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 46,
-    borderWidth: 2,
-    borderRadius: 8,
     paddingHorizontal: 14,
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
+    fontWeight: '600',
   },
   textArea: {
     minHeight: 70,
-    borderWidth: 2,
-    borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    fontFamily: 'SpaceMono',
-    fontSize: 13,
+    fontWeight: '500',
     textAlignVertical: 'top',
   },
   priorityRow: {
@@ -430,15 +516,11 @@ const styles = StyleSheet.create({
   },
   priorityBtn: {
     flex: 1,
-    borderWidth: 2,
-    borderRadius: 8,
     paddingVertical: 8,
     alignItems: 'center',
   },
   priorityBtnText: {
-    fontFamily: 'SpaceMono',
-    fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   subtasksHeaderRow: {
     marginTop: 18,
@@ -452,20 +534,16 @@ const styles = StyleSheet.create({
   subtaskCheckbox: {
     width: 22,
     height: 22,
-    borderWidth: 2,
-    borderRadius: 4,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
   subtaskTitle: {
     flex: 1,
-    fontFamily: 'SpaceMono',
-    fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   deleteSubtaskBtn: {
-    padding: 4,
+    padding: 6,
     marginLeft: 8,
   },
   addSubtaskRow: {
@@ -476,24 +554,15 @@ const styles = StyleSheet.create({
   subtaskInput: {
     flex: 1,
     height: 42,
-    borderWidth: 2,
-    borderRadius: 8,
     paddingHorizontal: 12,
-    fontFamily: 'SpaceMono',
-    fontSize: 12,
     marginRight: 8,
+    fontWeight: '500',
   },
   addSubtaskBtn: {
     width: 42,
     height: 42,
-    borderWidth: 2,
-    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 2,
   },
   actionsContainer: {
     marginTop: 24,
