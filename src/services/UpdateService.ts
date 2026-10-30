@@ -40,8 +40,8 @@ class UpdateService {
    * Check for updates strictly over Wi-Fi (or if force=true)
    */
   public async checkForUpdates(force = false): Promise<boolean> {
-    if (__DEV__) {
-      // In development mode, expo-updates does not pull remote bundles
+    if (__DEV__ || !Updates.isEnabled) {
+      // In development or when updates are disabled, expo-updates does not pull remote bundles
       return false;
     }
 
