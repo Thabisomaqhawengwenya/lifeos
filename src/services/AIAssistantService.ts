@@ -136,6 +136,7 @@ export class AIAssistantService {
           amount_cents: action.payload.amount_cents,
           category: action.payload.category,
           description: action.payload.description,
+          provider: action.payload.provider || 'manual',
         });
         return true;
       }

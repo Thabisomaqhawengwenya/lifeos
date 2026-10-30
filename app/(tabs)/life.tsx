@@ -40,6 +40,9 @@ import {
 import { NoteEditorModal } from '@/src/components/notes/NoteEditorModal';
 import { updateService, UpdateStatus } from '@/src/services/UpdateService';
 import { getLocalDateString } from '@/src/utils/date';
+import { BrandLogo } from '@/src/components/finance/BrandLogo';
+import { SmsQuickPasteModal } from '@/src/components/finance/SmsQuickPasteModal';
+import { CsvStatementModal } from '@/src/components/finance/CsvStatementModal';
 
 type LifeSection = 'habits' | 'goals' | 'finance' | 'notes' | 'vault';
 
@@ -66,6 +69,9 @@ export default function LifeScreen() {
   const [keyInput, setKeyInput] = useState('');
   const [selectedNote, setSelectedNote] = useState<NoteItem | null>(null);
   const [noteModalVisible, setNoteModalVisible] = useState(false);
+  const [smsModalVisible, setSmsModalVisible] = useState(false);
+  const [selectedSmsProvider, setSelectedSmsProvider] = useState<'ecocash' | 'innbucks'>('ecocash');
+  const [csvModalVisible, setCsvModalVisible] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>(updateService.getStatus());
 
   const params = useLocalSearchParams<{
@@ -700,6 +706,190 @@ export default function LifeScreen() {
               </View>
             </M3Card>
 
+            {/* INTEGRATED CHANNELS & STATEMENTS */}
+            <View style={styles.subSectionTitleRow}>
+              <Text
+                style={[
+                  styles.subSectionTitle,
+                  { color: colors.text, fontSize: typography.sizes.sm },
+                ]}
+              >
+                INTEGRATED CHANNELS & IMPORTS
+              </Text>
+            </View>
+
+            <View style={styles.channelsContainer}>
+              {/* EcoCash Card */}
+              <M3Card stripe="blue" style={styles.channelCard}>
+                <View style={styles.channelCardInner}>
+                  <View style={styles.channelLeft}>
+                    <BrandLogo brand="ecocash" size={40} />
+                    <View style={styles.channelInfo}>
+                      <Text
+                        style={[
+                          styles.channelTitle,
+                          { color: colors.text, fontSize: typography.sizes.sm },
+                        ]}
+                      >
+                        ECOCASH
+                      </Text>
+                      <Text
+                        style={[
+                          styles.channelSub,
+                          { color: colors.textMuted, fontSize: typography.sizes.xs },
+                        ]}
+                      >
+                        USD & ZiG SMS Parser
+                      </Text>
+                    </View>
+                  </View>
+                  <Pressable
+                    onPress={() => {
+                      haptic.selection();
+                      setSelectedSmsProvider('ecocash');
+                      setSmsModalVisible(true);
+                    }}
+                    style={[
+                      styles.channelActionBtn,
+                      {
+                        backgroundColor: colors.yellow,
+                        borderColor: colors.border,
+                        borderWidth: colors.borderWidth,
+                        borderRadius: radii.sm,
+                        shadowColor: shadowSmall.shadowColor,
+                        shadowOffset: shadowSmall.shadowOffset,
+                        shadowOpacity: shadowSmall.shadowOpacity,
+                        shadowRadius: shadowSmall.shadowRadius,
+                        elevation: shadowSmall.elevation,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.channelActionText,
+                        { color: '#000000', fontSize: typography.sizes.xs },
+                      ]}
+                    >
+                      PASTE SMS
+                    </Text>
+                  </Pressable>
+                </View>
+              </M3Card>
+
+              {/* InnBucks Card */}
+              <M3Card stripe="purple" style={styles.channelCard}>
+                <View style={styles.channelCardInner}>
+                  <View style={styles.channelLeft}>
+                    <BrandLogo brand="innbucks" size={40} />
+                    <View style={styles.channelInfo}>
+                      <Text
+                        style={[
+                          styles.channelTitle,
+                          { color: colors.text, fontSize: typography.sizes.sm },
+                        ]}
+                      >
+                        INNBUCKS
+                      </Text>
+                      <Text
+                        style={[
+                          styles.channelSub,
+                          { color: colors.textMuted, fontSize: typography.sizes.xs },
+                        ]}
+                      >
+                        Fast-Food & QR Payments
+                      </Text>
+                    </View>
+                  </View>
+                  <Pressable
+                    onPress={() => {
+                      haptic.selection();
+                      setSelectedSmsProvider('innbucks');
+                      setSmsModalVisible(true);
+                    }}
+                    style={[
+                      styles.channelActionBtn,
+                      {
+                        backgroundColor: colors.yellow,
+                        borderColor: colors.border,
+                        borderWidth: colors.borderWidth,
+                        borderRadius: radii.sm,
+                        shadowColor: shadowSmall.shadowColor,
+                        shadowOffset: shadowSmall.shadowOffset,
+                        shadowOpacity: shadowSmall.shadowOpacity,
+                        shadowRadius: shadowSmall.shadowRadius,
+                        elevation: shadowSmall.elevation,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.channelActionText,
+                        { color: '#000000', fontSize: typography.sizes.xs },
+                      ]}
+                    >
+                      PASTE SMS
+                    </Text>
+                  </Pressable>
+                </View>
+              </M3Card>
+
+              {/* CSV Statements Card */}
+              <M3Card stripe="mint" style={styles.channelCard}>
+                <View style={styles.channelCardInner}>
+                  <View style={styles.channelLeft}>
+                    <BrandLogo brand="csv" size={40} />
+                    <View style={styles.channelInfo}>
+                      <Text
+                        style={[
+                          styles.channelTitle,
+                          { color: colors.text, fontSize: typography.sizes.sm },
+                        ]}
+                      >
+                        CSV STATEMENTS
+                      </Text>
+                      <Text
+                        style={[
+                          styles.channelSub,
+                          { color: colors.textMuted, fontSize: typography.sizes.xs },
+                        ]}
+                      >
+                        Bulk Statement Import & Export
+                      </Text>
+                    </View>
+                  </View>
+                  <Pressable
+                    onPress={() => {
+                      haptic.selection();
+                      setCsvModalVisible(true);
+                    }}
+                    style={[
+                      styles.channelActionBtn,
+                      {
+                        backgroundColor: colors.mint,
+                        borderColor: colors.border,
+                        borderWidth: colors.borderWidth,
+                        borderRadius: radii.sm,
+                        shadowColor: shadowSmall.shadowColor,
+                        shadowOffset: shadowSmall.shadowOffset,
+                        shadowOpacity: shadowSmall.shadowOpacity,
+                        shadowRadius: shadowSmall.shadowRadius,
+                        elevation: shadowSmall.elevation,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.channelActionText,
+                        { color: '#000000', fontSize: typography.sizes.xs },
+                      ]}
+                    >
+                      IMPORT / EXPORT
+                    </Text>
+                  </Pressable>
+                </View>
+              </M3Card>
+            </View>
+
             <View style={styles.subSectionTitleRow}>
               <Text
                 style={[
@@ -735,6 +925,11 @@ export default function LifeScreen() {
                     ]}
                   >
                   <View style={styles.txRow}>
+                    <BrandLogo
+                      brand={tx.provider || (tx.description?.toLowerCase().includes('ecocash') ? 'ecocash' : tx.description?.toLowerCase().includes('innbucks') ? 'innbucks' : 'manual')}
+                      size={32}
+                      style={{ marginRight: 10 }}
+                    />
                     <View style={{ flex: 1 }}>
                       <Text
                         style={[
@@ -1129,6 +1324,21 @@ export default function LifeScreen() {
         }}
         onSaved={loadData}
       />
+
+      {/* EcoCash & InnBucks SMS Quick-Paste Modal */}
+      <SmsQuickPasteModal
+        visible={smsModalVisible}
+        provider={selectedSmsProvider}
+        onClose={() => setSmsModalVisible(false)}
+        onSuccess={loadData}
+      />
+
+      {/* CSV Statement Import / Export Modal */}
+      <CsvStatementModal
+        visible={csvModalVisible}
+        onClose={() => setCsvModalVisible(false)}
+        onSuccess={loadData}
+      />
     </View>
   );
 }
@@ -1248,6 +1458,46 @@ const styles = StyleSheet.create({
   cashboxVal: {
     fontWeight: '800',
     marginTop: 2,
+  },
+  channelsContainer: {
+    marginBottom: 14,
+    gap: 8,
+  },
+  channelCard: {
+    marginBottom: 2,
+  },
+  channelCardInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  channelLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    paddingRight: 8,
+  },
+  channelInfo: {
+    marginLeft: 10,
+    flex: 1,
+  },
+  channelTitle: {
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  channelSub: {
+    marginTop: 2,
+    fontWeight: '600',
+  },
+  channelActionBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  channelActionText: {
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   subSectionTitleRow: {
     marginVertical: 10,
