@@ -10,8 +10,8 @@
 
 | Platform | Download Link | Build Type | Status |
 | :--- | :--- | :--- | :--- |
-| **Android (APK v1.2.1)** | [⬇️ Download LifeOS v1.2.1 APK (EAS Direct)](https://expo.dev/accounts/maqhawengwenya/projects/LifeOS/builds/e1aa0b70-ce01-434c-90e6-a69ce3bb5e4c) | Standalone Preview APK with OTA channel (`com.maqhawe.lifeos`) | 🚀 In Progress (EAS Cloud) |
-| **Expo EAS Cloud Build** | [🌐 Expo Build Details](https://expo.dev/accounts/maqhawengwenya/projects/LifeOS/builds/e1aa0b70-ce01-434c-90e6-a69ce3bb5e4c) | EAS Cloud Artifact (`e1aa0b70`) | ⚙️ Building with OTA Channel |
+| **Android (Direct APK)** | [⬇️ **Download LifeOS v1.2.1 APK (Direct Binary)**](https://expo.dev/artifacts/eas/dmk7GW8LlMDI_fngbi5GVmJgqHumdhy7x_KXN3zmzP0.apk) | Standalone Preview APK (`preview` OTA Channel) | ✅ Verified & Ready |
+| **Expo EAS Cloud Build** | [🌐 Expo Build Details](https://expo.dev/accounts/maqhawengwenya/projects/LifeOS/builds/e1aa0b70-ce01-434c-90e6-a69ce3bb5e4c) | EAS Cloud Artifact (`e1aa0b70`) | 🟢 Built with Channel `preview` |
 
 ---
 
