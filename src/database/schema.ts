@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS financial_transactions (
   amount_cents INTEGER NOT NULL, -- minor units (e.g. $10.50 = 1050)
   category TEXT NOT NULL,
   description TEXT,
+  provider TEXT DEFAULT 'manual',
   transaction_date TEXT NOT NULL,
   created_at TEXT NOT NULL
 );

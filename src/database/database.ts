@@ -19,6 +19,13 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   // Execute base relational schema
   await db.execAsync(INITIAL_SCHEMA);
 
+  // Additive non-destructive migration for financial provider channel
+  try {
+    await db.execAsync(`ALTER TABLE financial_transactions ADD COLUMN provider TEXT DEFAULT 'manual';`);
+  } catch {
+    // Column already exists or already up-to-date
+  }
+
   dbInstance = db;
   return dbInstance;
 }

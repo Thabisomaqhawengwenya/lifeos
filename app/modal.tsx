@@ -20,6 +20,7 @@ import { TaskRepository } from '@/src/repositories/TaskRepository';
 import { NoteRepository } from '@/src/repositories/NoteAndGoalRepository';
 import { FinanceRepository } from '@/src/repositories/FinanceRepository';
 import { NotificationService } from '@/src/services/NotificationService';
+import { BrandLogo } from '@/src/components/finance/BrandLogo';
 
 type CaptureType = 'task' | 'note' | 'reminder' | 'expense';
 
@@ -30,6 +31,7 @@ export default function QuickCaptureModal() {
   const [notes, setNotes] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [amount, setAmount] = useState('');
+  const [wallet, setWallet] = useState<'manual' | 'ecocash' | 'innbucks' | 'csv'>('manual');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSave = async () => {
@@ -56,6 +58,7 @@ export default function QuickCaptureModal() {
           amount_cents: amountCents,
           category: 'General',
           description: title.trim(),
+          provider: wallet,
         });
       } else if (captureType === 'reminder') {
         const trigger = new Date(Date.now() + 60 * 60 * 1000);
@@ -245,6 +248,57 @@ export default function QuickCaptureModal() {
                 },
               ]}
             />
+            <Text
+              style={[
+                styles.inputLabel,
+                { color: colors.text, fontSize: typography.sizes.xs, marginTop: 12 },
+              ]}
+            >
+              CHANNEL / WALLET
+            </Text>
+            <View style={styles.walletRow}>
+              {[
+                { id: 'manual', label: 'Cash' },
+                { id: 'ecocash', label: 'EcoCash' },
+                { id: 'innbucks', label: 'InnBucks' },
+                { id: 'csv', label: 'CSV/Bank' },
+              ].map((w) => {
+                const isSelected = wallet === w.id;
+                return (
+                  <Pressable
+                    key={w.id}
+                    onPress={() => {
+                      haptic.selection();
+                      setWallet(w.id as any);
+                    }}
+                    style={[
+                      styles.walletBtn,
+                      {
+                        backgroundColor: isSelected ? colors.yellow : colors.surfaceAlt,
+                        borderColor: colors.border,
+                        borderWidth: colors.borderWidth,
+                        borderRadius: radii.sm,
+                      },
+                    ]}
+                  >
+                    <BrandLogo brand={w.id} size={18} showBorder={false} />
+                    <Text
+                      style={[
+                        styles.walletBtnText,
+                        {
+                          color: '#000000',
+                          fontSize: typography.sizes.xs,
+                          fontWeight: isSelected ? '800' : '600',
+                          marginLeft: 4,
+                        },
+                      ]}
+                    >
+                      {w.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </>
         )}
 
@@ -405,6 +459,22 @@ const styles = StyleSheet.create({
     height: 48,
     paddingHorizontal: 14,
     fontWeight: '600',
+  },
+  walletRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  walletBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    flex: 1,
+    justifyContent: 'center',
+  },
+  walletBtnText: {
+    letterSpacing: 0.3,
   },
   priorityRow: {
     flexDirection: 'row',
