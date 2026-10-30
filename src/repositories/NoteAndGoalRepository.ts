@@ -39,6 +39,24 @@ export class NoteRepository {
     }));
   }
 
+  static async getNoteById(id: string): Promise<NoteItem | null> {
+    const db = await getDatabase();
+    const r = await db.getFirstAsync<any>(
+      `SELECT * FROM notes WHERE id = ?`,
+      [id]
+    );
+    if (!r) return null;
+    return {
+      id: r.id,
+      title: r.title,
+      content: r.content,
+      tags: r.tags,
+      is_pinned: Boolean(r.is_pinned),
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+    };
+  }
+
   static async createNote(data: {
     title: string;
     content: string;

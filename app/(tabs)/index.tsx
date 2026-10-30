@@ -17,7 +17,10 @@ import { haptic } from '@/src/design-system/haptics';
 import { TaskRepository, TaskItem } from '@/src/repositories/TaskRepository';
 import { HabitRepository, HabitItem } from '@/src/repositories/HabitRepository';
 import { TaskDetailModal } from '@/src/components/tasks/TaskDetailModal';
-import { GlobalSearchModal } from '@/src/components/search/GlobalSearchModal';
+import { NoteEditorModal } from '@/src/components/notes/NoteEditorModal';
+import { GlobalSearchModal, createSearchSelectHandler } from '@/src/components/search/GlobalSearchModal';
+import { NoteRepository, NoteItem } from '@/src/repositories/NoteAndGoalRepository';
+import { SearchResultItem } from '@/src/repositories/SearchRepository';
 import {
   getGreeting,
   formatHeaderDate,
@@ -30,7 +33,34 @@ export default function TodayScreen() {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [habits, setHabits] = useState<HabitItem[]>([]);
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
+  const [selectedNote, setSelectedNote] = useState<NoteItem | null>(null);
   const [searchVisible, setSearchVisible] = useState(false);
+
+  const handleSearchSelect = useCallback(async (item: SearchResultItem) => {
+    setSearchVisible(false);
+    if (item.type === 'task') {
+      const t = await TaskRepository.getTaskById(item.id);
+      if (t) setSelectedTask(t);
+    } else if (item.type === 'note') {
+      const n = await NoteRepository.getNoteById(item.id);
+      if (n) setSelectedNote(n);
+    } else if (item.type === 'habit') {
+      router.navigate({
+        pathname: '/(tabs)/life',
+        params: { section: 'habits', itemId: item.id },
+      });
+    } else if (item.type === 'expense') {
+      router.navigate({
+        pathname: '/(tabs)/life',
+        params: { section: 'finance', itemId: item.id },
+      });
+    } else if (item.type === 'goal') {
+      router.navigate({
+        pathname: '/(tabs)/life',
+        params: { section: 'goals', itemId: item.id },
+      });
+    }
+  }, []);
 
   const greeting = getGreeting();
   const todayFormatted = formatHeaderDate();
@@ -513,10 +543,22 @@ export default function TodayScreen() {
         onUpdated={loadData}
       />
 
+      {/* Note Editor Modal */}
+      <NoteEditorModal
+        visible={Boolean(selectedNote)}
+        note={selectedNote}
+        onClose={() => setSelectedNote(null)}
+        onSaved={() => {
+          setSelectedNote(null);
+          loadData();
+        }}
+      />
+
       {/* Global Search Modal */}
       <GlobalSearchModal
         visible={searchVisible}
         onClose={() => setSearchVisible(false)}
+        onSelectItem={handleSearchSelect}
       />
     </View>
   );

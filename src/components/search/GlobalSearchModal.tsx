@@ -10,11 +10,14 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { M3Card, CardStripeColor } from '@/src/components/ui/M3Card';
 import { haptic } from '@/src/design-system/haptics';
 import { SearchRepository, SearchResultItem } from '@/src/repositories/SearchRepository';
+import { createSearchSelectHandler, SearchSelectOptions } from '@/src/utils/searchNavigation';
+export { createSearchSelectHandler, SearchSelectOptions };
 
 interface GlobalSearchModalProps {
   visible: boolean;
@@ -31,6 +34,16 @@ export function GlobalSearchModal({
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResultItem[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+
+  const handleItemPress = (item: SearchResultItem) => {
+    haptic.selection();
+    onClose();
+    if (onSelectItem) {
+      onSelectItem(item);
+    } else {
+      createSearchSelectHandler({})(item);
+    }
+  };
 
   const handleSearch = async (text: string) => {
     setQuery(text);
@@ -198,11 +211,7 @@ export function GlobalSearchModal({
                 key={`${item.type}_${item.id}`}
                 stripe={getStripeForType(item.type)}
                 style={styles.resultCard}
-                onPress={() => {
-                  haptic.selection();
-                  onSelectItem?.(item);
-                  onClose();
-                }}
+                onPress={() => handleItemPress(item)}
               >
                 <View style={styles.resultRow}>
                   <View

@@ -8,7 +8,7 @@ import {
   Alert,
   TextInput,
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { M3Header } from '@/src/components/ui/M3Header';
@@ -67,6 +67,29 @@ export default function LifeScreen() {
   const [selectedNote, setSelectedNote] = useState<NoteItem | null>(null);
   const [noteModalVisible, setNoteModalVisible] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>(updateService.getStatus());
+
+  const params = useLocalSearchParams<{
+    section?: string;
+    itemId?: string;
+    noteId?: string;
+  }>();
+
+  useEffect(() => {
+    if (
+      params.section &&
+      ['habits', 'goals', 'finance', 'notes', 'vault'].includes(params.section)
+    ) {
+      setActiveSection(params.section as LifeSection);
+    }
+    if (params.noteId) {
+      NoteRepository.getNoteById(params.noteId).then((n) => {
+        if (n) {
+          setSelectedNote(n);
+          setNoteModalVisible(true);
+        }
+      });
+    }
+  }, [params.section, params.noteId, params.itemId]);
 
   useEffect(() => {
     const unsub = updateService.subscribe((s) => setUpdateStatus(s));
@@ -258,8 +281,20 @@ export default function LifeScreen() {
                 onAction={() => router.push('/modal')}
               />
             ) : (
-              habits.map((h) => (
-                <M3Card key={h.id} stripe="mint" style={styles.cardItem}>
+              habits.map((h) => {
+                const isTargeted = params.itemId === h.id;
+                return (
+                  <M3Card
+                    key={h.id}
+                    stripe="mint"
+                    style={[
+                      styles.cardItem,
+                      isTargeted && {
+                        borderColor: colors.accentYellow,
+                        borderWidth: 3,
+                      },
+                    ]}
+                  >
                   <View style={styles.cardHeaderRow}>
                     <View style={styles.cardTitleArea}>
                       <Text
@@ -321,7 +356,8 @@ export default function LifeScreen() {
                     </Pressable>
                   </View>
                 </M3Card>
-              ))
+              );
+              })
             )}
           </>
         )}
@@ -354,8 +390,19 @@ export default function LifeScreen() {
                   100,
                   Math.max(0, Math.round(g.progress_percent))
                 );
+                const isTargeted = params.itemId === g.id;
                 return (
-                  <M3Card key={g.id} stripe="yellow" style={styles.cardItem}>
+                  <M3Card
+                    key={g.id}
+                    stripe="yellow"
+                    style={[
+                      styles.cardItem,
+                      isTargeted && {
+                        borderColor: colors.accentYellow,
+                        borderWidth: 3,
+                      },
+                    ]}
+                  >
                     <View style={styles.goalHeaderRow}>
                       <View style={{ flex: 1, paddingRight: 8 }}>
                         <Text
@@ -673,8 +720,20 @@ export default function LifeScreen() {
                 onAction={() => router.push('/modal')}
               />
             ) : (
-              recentTransactions.map((tx) => (
-                <M3Card key={tx.id} stripe="blue" style={styles.txCard}>
+              recentTransactions.map((tx) => {
+                const isTargeted = params.itemId === tx.id;
+                return (
+                  <M3Card
+                    key={tx.id}
+                    stripe="blue"
+                    style={[
+                      styles.txCard,
+                      isTargeted && {
+                        borderColor: colors.accentYellow,
+                        borderWidth: 3,
+                      },
+                    ]}
+                  >
                   <View style={styles.txRow}>
                     <View style={{ flex: 1 }}>
                       <Text
@@ -713,7 +772,8 @@ export default function LifeScreen() {
                     </Text>
                   </View>
                 </M3Card>
-              ))
+              );
+              })
             )}
           </>
         )}

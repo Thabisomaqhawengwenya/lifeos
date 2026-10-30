@@ -7,7 +7,7 @@ import {
   Pressable,
   RefreshControl,
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/design-system/ThemeContext';
 import { M3Header } from '@/src/components/ui/M3Header';
@@ -18,7 +18,10 @@ import { M3EmptyState } from '@/src/components/ui/M3EmptyState';
 import { haptic } from '@/src/design-system/haptics';
 import { TaskRepository, TaskItem } from '@/src/repositories/TaskRepository';
 import { TaskDetailModal } from '@/src/components/tasks/TaskDetailModal';
-import { GlobalSearchModal } from '@/src/components/search/GlobalSearchModal';
+import { NoteEditorModal } from '@/src/components/notes/NoteEditorModal';
+import { GlobalSearchModal, createSearchSelectHandler } from '@/src/components/search/GlobalSearchModal';
+import { NoteRepository, NoteItem } from '@/src/repositories/NoteAndGoalRepository';
+import { SearchResultItem } from '@/src/repositories/SearchRepository';
 
 type FilterType = 'all' | 'today' | 'upcoming' | 'completed';
 
@@ -28,7 +31,44 @@ export default function TasksScreen() {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
+  const [selectedNote, setSelectedNote] = useState<NoteItem | null>(null);
   const [searchVisible, setSearchVisible] = useState(false);
+
+  const params = useLocalSearchParams<{ taskId?: string }>();
+
+  React.useEffect(() => {
+    if (params.taskId) {
+      TaskRepository.getTaskById(params.taskId).then((t) => {
+        if (t) setSelectedTask(t);
+      });
+    }
+  }, [params.taskId]);
+
+  const handleSearchSelect = useCallback(async (item: SearchResultItem) => {
+    setSearchVisible(false);
+    if (item.type === 'task') {
+      const t = await TaskRepository.getTaskById(item.id);
+      if (t) setSelectedTask(t);
+    } else if (item.type === 'note') {
+      const n = await NoteRepository.getNoteById(item.id);
+      if (n) setSelectedNote(n);
+    } else if (item.type === 'habit') {
+      router.navigate({
+        pathname: '/(tabs)/life',
+        params: { section: 'habits', itemId: item.id },
+      });
+    } else if (item.type === 'expense') {
+      router.navigate({
+        pathname: '/(tabs)/life',
+        params: { section: 'finance', itemId: item.id },
+      });
+    } else if (item.type === 'goal') {
+      router.navigate({
+        pathname: '/(tabs)/life',
+        params: { section: 'goals', itemId: item.id },
+      });
+    }
+  }, []);
 
   const loadTasks = useCallback(async () => {
     try {
@@ -341,10 +381,22 @@ export default function TasksScreen() {
         onUpdated={loadTasks}
       />
 
+      {/* Note Editor Modal */}
+      <NoteEditorModal
+        visible={Boolean(selectedNote)}
+        note={selectedNote}
+        onClose={() => setSelectedNote(null)}
+        onSaved={() => {
+          setSelectedNote(null);
+          loadTasks();
+        }}
+      />
+
       {/* Global Search Modal */}
       <GlobalSearchModal
         visible={searchVisible}
         onClose={() => setSearchVisible(false)}
+        onSelectItem={handleSearchSelect}
       />
     </View>
   );

@@ -56,6 +56,38 @@ export class TaskRepository {
     }));
   }
 
+  static async getTaskById(id: string): Promise<TaskItem | null> {
+    const db = await getDatabase();
+    const r = await db.getFirstAsync<any>(
+      `SELECT 
+        t.*,
+        COUNT(s.id) as subtask_count,
+        SUM(CASE WHEN s.is_completed = 1 THEN 1 ELSE 0 END) as completed_subtasks
+      FROM tasks t
+      LEFT JOIN subtasks s ON s.task_id = t.id
+      WHERE t.id = ? AND t.deleted_at IS NULL
+      GROUP BY t.id`,
+      [id]
+    );
+
+    if (!r) return null;
+
+    return {
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      category: r.category,
+      priority: r.priority,
+      due_date: r.due_date,
+      is_completed: Boolean(r.is_completed),
+      completed_at: r.completed_at,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+      subtask_count: Number(r.subtask_count || 0),
+      completed_subtasks: Number(r.completed_subtasks || 0),
+    };
+  }
+
   static async createTask(data: {
     title: string;
     description?: string;

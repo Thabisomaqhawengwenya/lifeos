@@ -42,3 +42,14 @@ vi.mock('expo-secure-store', () => {
     },
   };
 });
+
+vi.mock('expo-router', () => ({
+  router: {
+    push: vi.fn(),
+    navigate: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+  },
+  useFocusEffect: vi.fn(),
+  useLocalSearchParams: vi.fn(() => ({})),
+}));

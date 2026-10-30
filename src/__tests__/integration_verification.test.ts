@@ -1,6 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { AIAssistantService } from '../services/AIAssistantService';
 import { getLocalDateString, getWeekDays, isTodayDate, formatHeaderDate } from '../utils/date';
+import { createSearchSelectHandler } from '../utils/searchNavigation';
+import { router } from 'expo-router';
 
 describe('LifeOS Full Integration & Edge-Case Verification', () => {
   it('parses natural language assistant commands deterministically', () => {
@@ -45,6 +47,63 @@ describe('LifeOS Full Integration & Edge-Case Verification', () => {
     const otherItems = week.filter((d) => d.fullDate !== todayStr);
     otherItems.forEach((item) => {
       expect(item.isToday).toBe(false);
+    });
+  });
+
+  it('navigates to appropriate destination when global search result is selected', () => {
+    const mockOnSelectTask = vi.fn();
+    const mockOnSelectNote = vi.fn();
+
+    const handler = createSearchSelectHandler({
+      onSelectTask: mockOnSelectTask,
+      onSelectNote: mockOnSelectNote,
+    });
+
+    // 1. Task -> calls onSelectTask
+    handler({ id: 'task-1', type: 'task', title: 'Task 1', subtitle: 'Sub' });
+    expect(mockOnSelectTask).toHaveBeenCalledWith('task-1');
+
+    // 2. Note -> calls onSelectNote
+    handler({ id: 'note-1', type: 'note', title: 'Note 1', subtitle: 'Sub' });
+    expect(mockOnSelectNote).toHaveBeenCalledWith('note-1');
+
+    // 3. Habit -> navigates to life tab habits section
+    handler({ id: 'habit-1', type: 'habit', title: 'Habit 1', subtitle: 'Sub' });
+    expect(router.navigate).toHaveBeenCalledWith({
+      pathname: '/(tabs)/life',
+      params: { section: 'habits', itemId: 'habit-1' },
+    });
+
+    // 4. Expense -> navigates to life tab finance section
+    handler({ id: 'exp-1', type: 'expense', title: 'Expense 1', subtitle: 'Sub' });
+    expect(router.navigate).toHaveBeenCalledWith({
+      pathname: '/(tabs)/life',
+      params: { section: 'finance', itemId: 'exp-1' },
+    });
+
+    // 5. Goal -> navigates to life tab goals section
+    handler({ id: 'goal-1', type: 'goal', title: 'Goal 1', subtitle: 'Sub' });
+    expect(router.navigate).toHaveBeenCalledWith({
+      pathname: '/(tabs)/life',
+      params: { section: 'goals', itemId: 'goal-1' },
+    });
+  });
+
+  it('navigates with default fallback routing when custom handlers are not provided', () => {
+    const defaultHandler = createSearchSelectHandler({});
+
+    // Task fallback routes to /tasks
+    defaultHandler({ id: 'task-fallback', type: 'task', title: 'Task', subtitle: 'Sub' });
+    expect(router.navigate).toHaveBeenCalledWith({
+      pathname: '/(tabs)/tasks',
+      params: { taskId: 'task-fallback' },
+    });
+
+    // Note fallback routes to /life with section notes
+    defaultHandler({ id: 'note-fallback', type: 'note', title: 'Note', subtitle: 'Sub' });
+    expect(router.navigate).toHaveBeenCalledWith({
+      pathname: '/(tabs)/life',
+      params: { section: 'notes', noteId: 'note-fallback' },
     });
   });
 });
